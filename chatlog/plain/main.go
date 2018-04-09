@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/jamesbcook/chat-bot-plugins/chatlog"
+	"github.com/jamesbcook/chatbot-plugins/chatlog"
 )
 
 var (

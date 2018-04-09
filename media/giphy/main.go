@@ -8,8 +8,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/jamesbcook/chat-bot-plugins/media"
-	"github.com/jamesbcook/chat-bot/kbchat"
+	"github.com/jamesbcook/chatbot-plugins/media"
+	"github.com/jamesbcook/chatbot/kbchat"
 	"github.com/sanzaru/go-giphy"
 )
 

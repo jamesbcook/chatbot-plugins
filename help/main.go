@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/jamesbcook/chat-bot/kbchat"
+	"github.com/jamesbcook/chatbot/kbchat"
 )
 
 var (

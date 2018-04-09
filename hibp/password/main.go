@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/jamesbcook/chat-bot-plugins/hibp"
-	"github.com/jamesbcook/chat-bot/kbchat"
+	"github.com/jamesbcook/chatbot-plugins/hibp"
+	"github.com/jamesbcook/chatbot/kbchat"
 )
 
 const (

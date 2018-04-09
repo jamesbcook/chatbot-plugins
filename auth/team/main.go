@@ -6,8 +6,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/jamesbcook/chat-bot/kbchat"
-	"github.com/jamesbcook/chat-bot/kbchat/team"
+	"github.com/jamesbcook/chatbot/kbchat"
+	"github.com/jamesbcook/chatbot/kbchat/team"
 )
 
 var (
