@@ -68,14 +68,40 @@ func (l *logger) write(p []byte) (int, error) {
 	return l.f.Write([]byte(formated))
 }
 
+func (lo logging) Decrypt(src []byte) ([]byte, error) {
+	decoded := make([]byte, hex.DecodedLen(len(src)))
+	_, err := hex.Decode(decoded, src)
+	if err != nil {
+		return nil, err
+	}
+	nonce := make([]byte, 12)
+	copy(nonce, decoded[:12])
+	plaintext, err := aesgcm.Open(nil, nonce, decoded[12:], nil)
+	if err != nil {
+		return nil, err
+	}
+	return plaintext, err
+}
+
 func init() {
 	l, err = start()
 	if err != nil {
 		log.Fatal(err)
 	}
-	decodeKey, _ := hex.DecodeString(os.Getenv("CHATBOT_LOG_KEY"))
+	var decodedKey []byte
+	if res := os.Getenv("CHATBOT_LOG_KEY"); res == "" {
+		decodedKey, err = hex.DecodeString("43f287ac2487750aaf4b3cafa3f4c979")
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		decodedKey, err = hex.DecodeString(os.Getenv("CHATBOT_LOG_KEY"))
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 
-	block, err := aes.NewCipher(decodeKey)
+	block, err := aes.NewCipher(decodedKey)
 	if err != nil {
 		panic(err.Error())
 	}
