@@ -30,13 +30,13 @@ func Start(writer io.Writer) {
 	for {
 		w, err := kbchat.Start("team")
 		if err != nil {
-			errorWriter(writer, fmt.Errorf("Error getting team api %v", err.Error()))
+			errorWriter(writer, fmt.Errorf("[Team Error] getting team api %v", err.Error()))
 			continue
 		}
 		teamName := os.Getenv("CHATBOT_TEAM")
 		output, err := team.Get(w, teamName, team.Members)
 		if err != nil {
-			errorWriter(writer, fmt.Errorf("Error getting team members %v", err.Error()))
+			errorWriter(writer, fmt.Errorf("[Team Error] getting team members %v", err.Error()))
 			continue
 		}
 		users = make([]string, len(output))

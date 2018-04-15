@@ -46,7 +46,7 @@ func (g getting) Get(input string) (string, error) {
 func (g getting) Send(msgID, msg string) error {
 	w, err := kbchat.Start("chat")
 	if err != nil {
-		return err
+		return fmt.Errorf("[Help Error] sending message %v", err)
 	}
 	return w.SendMessage(msgID, msg)
 }

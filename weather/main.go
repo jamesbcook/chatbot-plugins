@@ -66,25 +66,25 @@ func (g getting) Get(input string) (string, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return "", fmt.Errorf("[Error] creating request %v", err)
+		return "", fmt.Errorf("[Weather Error] creating request %v", err)
 	}
 	req.Header.Set("User-Agent", userAgent)
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("[Error] sending request %v", err)
+		return "", fmt.Errorf("[Weather Error] sending request %v", err)
 	}
 	defer resp.Body.Close()
 	var buf bytes.Buffer
 	_, err = buf.ReadFrom(resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("[Error] reading from resp body %v", err)
+		return "", fmt.Errorf("[Weather Error] reading from resp body %v", err)
 	}
 	o := &OpenWeather{}
 	if err := json.Unmarshal(buf.Bytes(), o); err != nil {
-		return "", fmt.Errorf("[Error] unmarshalling response %v", err)
+		return "", fmt.Errorf("[Weather Error] unmarshalling response %v", err)
 	}
 	if len(o.Weather) <= 0 {
-		return "", fmt.Errorf("[Error] no weather found")
+		return "", fmt.Errorf("[Weather Error] no weather found")
 	}
 	output := fmt.Sprintf("Weather Description: %s\nTemperature: %.2f\tHumidity: %d\tMin: %.2f\tMax: %.2f\n",
 		o.Weather[0].Description, o.Temperature.Temp, o.Temperature.Humidity, o.Temperature.Min, o.Temperature.Max)
@@ -96,7 +96,7 @@ func (g getting) Get(input string) (string, error) {
 func (g getting) Send(msgID, msg string) error {
 	w, err := kbchat.Start("chat")
 	if err != nil {
-		return err
+		return fmt.Errorf("[Weather Error] in send request %v", err)
 	}
 	return w.SendMessage(msgID, msg)
 }

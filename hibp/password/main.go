@@ -33,7 +33,7 @@ var Sender getting
 func (g getting) Get(input string) (string, error) {
 	res, err := hibp.Get(input, pwnedPassword)
 	if err != nil {
-		return "", fmt.Errorf("[Error] There was an error with your request")
+		return "", fmt.Errorf("[HIBP-Password Error] There was an error with your request")
 	}
 	msg := fmt.Sprintf("Password has been seen %s times", string(res))
 	return msg, nil
@@ -44,7 +44,7 @@ func (g getting) Get(input string) (string, error) {
 func (g getting) Send(msgID, msg string) error {
 	w, err := kbchat.Start("chat")
 	if err != nil {
-		return err
+		return fmt.Errorf("[HIBP-Password Error] sending message %v", err)
 	}
 	return w.SendMessage(msgID, msg)
 }

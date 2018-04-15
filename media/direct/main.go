@@ -33,20 +33,20 @@ var Sender getting
 func url(query string) ([]byte, error) {
 	resp, err := http.Get(query)
 	if err != nil {
-		return nil, fmt.Errorf("[Error] HTTP Get error %v", err)
+		return nil, fmt.Errorf("[Media Error] HTTP Get error %v", err)
 	}
 	defer resp.Body.Close()
 
 	buffer, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("[Error] Buffer read error %v", err)
+		return nil, fmt.Errorf("[Media Error] Buffer read error %v", err)
 	}
 	header := make([]byte, ctSize)
 	copy(header, buffer)
 	if validContentType(header) {
 		return buffer, nil
 	}
-	return nil, fmt.Errorf("[Error] Invalid ContentType")
+	return nil, fmt.Errorf("[Media Error] Invalid ContentType")
 }
 
 func validContentType(buffer []byte) bool {
@@ -64,7 +64,7 @@ func validContentType(buffer []byte) bool {
 func (g getting) Get(input string) (string, error) {
 	f, err := media.Setup(input, url)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("[Media Error] in Get request %v", err)
 	}
 	return f, nil
 }
@@ -75,7 +75,7 @@ func (g getting) Get(input string) (string, error) {
 func (g getting) Send(msgID, msg string) error {
 	w, err := kbchat.Start("chat")
 	if err != nil {
-		return err
+		return fmt.Errorf("[Media Error] in send request %v", err)
 	}
 	return w.Upload(msgID, msg, "Chatbot-Media")
 }

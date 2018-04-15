@@ -54,7 +54,7 @@ func (lo logging) Write(p []byte) (int, error) {
 func start() (*logger, error) {
 	f, err := os.OpenFile(chatlog.LogFile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
-		return nil, fmt.Errorf("Error opening file %v", err)
+		return nil, fmt.Errorf("[Log Error] opening file %v", err)
 	}
 	l.f = f
 	return l, nil
@@ -72,15 +72,15 @@ func (lo logging) Decrypt(src []byte) ([]byte, error) {
 	decoded := make([]byte, hex.DecodedLen(len(src)))
 	_, err := hex.Decode(decoded, src)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("[Log Error] decoding bytes %v", err)
 	}
 	nonce := make([]byte, 12)
 	copy(nonce, decoded[:12])
 	plaintext, err := aesgcm.Open(nil, nonce, decoded[12:], nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("[Log Error] opening ciphertext %v", err)
 	}
-	return plaintext, err
+	return plaintext, nil
 }
 
 func init() {

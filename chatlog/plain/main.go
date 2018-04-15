@@ -37,7 +37,7 @@ func (g getting) Write(p []byte) (int, error) {
 func start() (*logger, error) {
 	f, err := os.OpenFile(chatlog.LogFile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
-		return nil, fmt.Errorf("Error opening file %v", err)
+		return nil, fmt.Errorf("[Log Error] opening file %v", err)
 	}
 	l.f = f
 	return l, nil

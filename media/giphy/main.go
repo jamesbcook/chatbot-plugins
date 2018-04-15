@@ -43,23 +43,23 @@ func giphy(query string) ([]byte, error) {
 
 	dataSearch, err := giphy.GetSearch(query, giphySearchLimit, -1, "", "", false)
 	if err != nil {
-		return nil, fmt.Errorf("[Error] Giphy search error: %v", err)
+		return nil, fmt.Errorf("[Giphy Error] Giphy search error: %v", err)
 	}
 	returnLen := len(dataSearch.Data)
 	if returnLen <= 0 {
-		return nil, fmt.Errorf("[Error] No gifs found :(")
+		return nil, fmt.Errorf("[Giphy Error] No gifs found :(")
 	}
 	gifURL := dataSearch.Data[rand.Intn(returnLen)].Images.Downsized.Url
 
 	// Get the data
 	resp, err := http.Get(gifURL)
 	if err != nil {
-		return nil, fmt.Errorf("[Error] Unable to retrieve gif %v", err)
+		return nil, fmt.Errorf("[Giphy Error] Unable to retrieve gif %v", err)
 	}
 	defer resp.Body.Close()
 	buffer, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("[Error] Buffer read error %v", err)
+		return nil, fmt.Errorf("[Giphy Error] Buffer read error %v", err)
 	}
 	return buffer, nil
 }
@@ -69,7 +69,7 @@ func giphy(query string) ([]byte, error) {
 func (g getting) Get(input string) (string, error) {
 	f, err := media.Setup(input, giphy)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("[Gihpy Error] in Get request %v", err)
 	}
 	return f, nil
 }
@@ -80,7 +80,7 @@ func (g getting) Get(input string) (string, error) {
 func (g getting) Send(msgID, msg string) error {
 	w, err := kbchat.Start("chat")
 	if err != nil {
-		return err
+		return fmt.Errorf("[Giphy Error] in send request %v", err)
 	}
 	return w.Upload(msgID, msg, "Chatbot-Giphy")
 }

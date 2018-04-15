@@ -63,19 +63,19 @@ var Sender getting
 func (g getting) Get(input string) (string, error) {
 	breachRes, err := hibp.Get(input, allBreachesForAccount)
 	if err != nil {
-		return "", fmt.Errorf("There was an error with your beaches request")
+		return "", fmt.Errorf("[HIBP-Account Error] There was an error with your beaches request")
 	}
 	pasteRes, err := hibp.Get(input, allPastesForAccount)
 	if err != nil {
-		return "", fmt.Errorf("There was an error with your pastes request")
+		return "", fmt.Errorf("[HIBP-Account Error] There was an error with your pastes request")
 	}
 	breaches := []breachedAccount{}
 	if err := json.Unmarshal(breachRes, &breaches); err != nil {
-		return "", fmt.Errorf("There was an error unmarshaling your request")
+		return "", fmt.Errorf("[HIBP-Account Error] There was an error unmarshaling your request")
 	}
 	pastes := []pasteAccount{}
 	if err := json.Unmarshal(pasteRes, &pastes); err != nil {
-		return "", fmt.Errorf("There was an error unmarshaling your request")
+		return "", fmt.Errorf("[HIBP-Account Error] There was an error unmarshaling your request")
 	}
 	return formatOutput(breaches, pastes), nil
 }
@@ -102,7 +102,7 @@ func formatOutput(breaches []breachedAccount, pastes []pasteAccount) string {
 func (g getting) Send(msgID, msg string) error {
 	w, err := kbchat.Start("chat")
 	if err != nil {
-		return err
+		return fmt.Errorf("[HIBP-Account Error] sending message %v", err)
 	}
 	return w.SendMessage(msgID, msg)
 }
