@@ -3,6 +3,7 @@
 ## Details
 
 * This plugin will return current weather of a requested city
+  * ```export CHATBOT_WEATHER={APIKEY}```
 
 ```
 CMD: /weather
