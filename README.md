@@ -32,6 +32,14 @@
 
 * Contains a plugin that queries a subreddit and returns the top 10 posts
 
+## Screenshot
+
+* Contains a plugin that will take a screenshot of a website and post it to the chat
+
+## VirusTotal
+
+* Contains a plugin that queries the VirusTotal api and returns the scan detection results if any exist
+
 ## Weather
 
 * Contains a plugin that communicates with the open weather api and returns the weather of a given city.

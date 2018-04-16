@@ -15,7 +15,6 @@ Help: /virustotal {sha256 of file}
 ```
 /virustotal bd2c2cf0631d881ed382817afcce2b093f4e412ffb170a719e2762f250abfea4
 -------------------------
-```
 VirusTotal Detection Results
 Total Detected 6
 Kaspersky  not-a-virus:HEUR:RiskTool.Win32.ProcHack.gen
