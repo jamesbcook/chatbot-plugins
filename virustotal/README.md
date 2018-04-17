@@ -3,7 +3,7 @@
 ## Details
 
 * This plugin query the VirusTotal api and return what signatures are available for that hash.
- * ```export CHATBOT_VIRUSTOTAL={APIKEY}```
+  * ```export CHATBOT_VIRUSTOTAL={APIKEY}```
 
 ```
 CMD: /virustotal

@@ -14,4 +14,4 @@ Help: /giphy {search term}
 /giphy hacker
 -------------------------
 ```
-![some gif](example_files/d137f72dc35e4bb2bd22e9395fb4a5d9d334d0a60cde6a05554924d25ab6151a.gif)
+![some gif](../example_files/d137f72dc35e4bb2bd22e9395fb4a5d9d334d0a60cde6a05554924d25ab6151a.gif)
