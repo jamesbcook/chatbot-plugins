@@ -96,8 +96,6 @@ func (g getting) Get(query string) (string, error) {
 		if ctx.Err() == context.DeadlineExceeded {
 			return "", fmt.Errorf("[Screenshot Error] Context time out")
 		}
-	} else {
-		return "", fmt.Errorf("[Screenshot Error] waiting on command %v", err)
 	}
 	return tmpfn, nil
 }
