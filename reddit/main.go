@@ -11,7 +11,7 @@ import (
 
 const (
 	userAgent = "KeyBase Chatbot"
-	urlFMT    = "https://www.reddit.com/r/%s/top/.json?count=10"
+	urlFMT    = "https://www.reddit.com/r/%s/top/.json"
 )
 
 var (
@@ -75,9 +75,15 @@ func (g getting) Get(input string) (string, error) {
 	if err := json.Unmarshal(buf.Bytes(), k); err != nil {
 		return "", fmt.Errorf("[Reddit Error] unmarshalling response %v", err)
 	}
-	msg := "Top 10 Posts\n"
-	for _, d := range k.Childrens {
-		msg += fmt.Sprintf("Title: %-16s\n", d.Data.Title)
+	var numOfLinks int
+	if len(k.Childrens) <= 10 {
+		numOfLinks = len(k.Childrens)
+	} else {
+		numOfLinks = 10
+	}
+	msg := "Top Posts\n"
+	for x := 0; x < numOfLinks; x++ {
+		msg += fmt.Sprintf("Title: %-16s\n", k.Childrens[x].Data.Title)
 	}
 	return msg, nil
 }
