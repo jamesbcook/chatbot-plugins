@@ -94,6 +94,7 @@ func init() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		log.Println("Missing CHATBOT_LOG_KEY using default key")
 	} else {
 		decodedKey, err = hex.DecodeString(os.Getenv("CHATBOT_LOG_KEY"))
 		if err != nil {

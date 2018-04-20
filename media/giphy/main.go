@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math/rand"
 	"net/http"
 	"os"
@@ -83,6 +84,12 @@ func (g getting) Send(msgID, msg string) error {
 		return fmt.Errorf("[Giphy Error] in send request %v", err)
 	}
 	return w.Upload(msgID, msg, "Chatbot-Giphy")
+}
+
+func init() {
+	if giphy := os.Getenv("CHATBOT_GIPHY"); giphy == "" {
+		log.Println("Missing CHATBOT_GIPHY environment variable")
+	}
 }
 
 func main() {}

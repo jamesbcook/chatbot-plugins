@@ -2,6 +2,7 @@ package main
 
 import (
 	"io"
+	"log"
 	"os"
 	"strings"
 	"time"
@@ -42,6 +43,13 @@ func Validate(user string) bool {
 		}
 	}
 	return false
+}
+
+func init() {
+	userEnv := os.Getenv("CHATBOT_USERS")
+	if userEnv == "" {
+		log.Println("Missing CHATBOT_USERS environment variable")
+	}
 }
 
 func main() {}

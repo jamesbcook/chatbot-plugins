@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 
@@ -99,6 +100,12 @@ func (g getting) Send(msgID, msg string) error {
 		return fmt.Errorf("[Weather Error] in send request %v", err)
 	}
 	return w.SendMessage(msgID, msg)
+}
+
+func init() {
+	if api := os.Getenv("CHATBOT_WEATHER"); api == "" {
+		log.Println("Missing CHATBOT_WEATHER environment variable")
+	}
 }
 
 func main() {}

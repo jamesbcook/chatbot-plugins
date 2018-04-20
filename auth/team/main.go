@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"time"
 
@@ -55,6 +56,13 @@ func Validate(user string) bool {
 		}
 	}
 	return false
+}
+
+func init() {
+	teamName := os.Getenv("CHATBOT_TEAM")
+	if teamName == "" {
+		log.Println("Missing CHATBOT_TEAM environment variable")
+	}
 }
 
 func main() {}

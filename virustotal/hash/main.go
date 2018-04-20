@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 
@@ -71,6 +72,12 @@ func (g getting) Send(msgID, msg string) error {
 		return fmt.Errorf("[VirusTotal Error] in send request %v", err)
 	}
 	return w.SendMessage(msgID, msg)
+}
+
+func init() {
+	if api := os.Getenv("CHATBOT_VIRUSTOTAL"); api == "" {
+		log.Println("Missing CHATBOT_VIRUSTOTAL environment variable")
+	}
 }
 
 func main() {}
