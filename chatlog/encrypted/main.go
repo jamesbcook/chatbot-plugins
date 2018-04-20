@@ -4,6 +4,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -12,6 +13,7 @@ import (
 	"time"
 
 	"github.com/jamesbcook/chatbot-plugins/chatlog"
+	"golang.org/x/crypto/hkdf"
 )
 
 var (
@@ -83,26 +85,29 @@ func (lo logging) Decrypt(src []byte) ([]byte, error) {
 	return plaintext, nil
 }
 
+func expandKey(inputKey string) io.Reader {
+	salt := [32]byte{0x6f, 0x64, 0x0e, 0xc7, 0x7f, 0x9c, 0x7a, 0xb4, 0x5f, 0xb4, 0xcc, 0x74, 0xcd, 0x73, 0x91, 0x66, 0x90, 0xd7, 0x2e, 0xd1, 0xee, 0xa7, 0xa6, 0xcd, 0x2d, 0xb1, 0xab, 0xde, 0x9e, 0x77, 0x15, 0x0a}
+	info := []byte{0x43, 0x68, 0x61, 0x74, 0x62, 0x6f, 0x74, 0x20, 0x45, 0x6e, 0x63, 0x72, 0x79, 0x70, 0x74, 0x65, 0x64, 0x20, 0x4c, 0x6f, 0x67, 0x20, 0x50, 0x6c, 0x75, 0x67, 0x69, 0x6e}
+	return hkdf.New(sha256.New, []byte(inputKey), salt[:], info)
+}
+
 func init() {
 	l, err = start()
 	if err != nil {
 		log.Fatal(err)
 	}
-	var decodedKey []byte
+	var dk io.Reader
+	var key [32]byte
 	if res := os.Getenv("CHATBOT_LOG_KEY"); res == "" {
-		decodedKey, err = hex.DecodeString("43f287ac2487750aaf4b3cafa3f4c979")
-		if err != nil {
-			log.Fatal(err)
-		}
+		dk = expandKey("Some Default Password That you Shouldn't Use")
 		log.Println("Missing CHATBOT_LOG_KEY using default key")
 	} else {
-		decodedKey, err = hex.DecodeString(os.Getenv("CHATBOT_LOG_KEY"))
-		if err != nil {
-			log.Fatal(err)
-		}
+		dk = expandKey(os.Getenv("CHATBOT_LOG_KEY"))
 	}
-
-	block, err := aes.NewCipher(decodedKey)
+	if _, err := io.ReadFull(dk, key[:]); err != nil {
+		log.Fatal(err)
+	}
+	block, err := aes.NewCipher(key[:])
 	if err != nil {
 		panic(err.Error())
 	}
