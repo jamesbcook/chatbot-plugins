@@ -39,7 +39,7 @@ var (
 
 const (
 	resolution = "1200,800"
-	userAgent  = "Keybase Chatbot/0.5.0"
+	userAgent  = "Keybase Chatbot"
 )
 
 var (

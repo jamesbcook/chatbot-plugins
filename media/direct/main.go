@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 
 	"github.com/jamesbcook/chatbot-plugins/media"
 	"github.com/jamesbcook/chatbot/kbchat"
@@ -76,6 +77,12 @@ func (g getting) Send(msgID, msg string) error {
 	w, err := kbchat.Start("chat")
 	if err != nil {
 		return fmt.Errorf("[Media Error] in send request %v", err)
+	}
+	if _, err = os.Stat(msg); os.IsNotExist(err) {
+		if err := w.SendMessage(msgID, msg); err != nil {
+			return w.Proc.Kill()
+		}
+		return w.Proc.Kill()
 	}
 	if err := w.Upload(msgID, msg, "Chatbot-Media"); err != nil {
 		return w.Proc.Kill()

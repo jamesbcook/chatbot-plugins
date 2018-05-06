@@ -85,7 +85,7 @@ func (g getting) Send(msgID, msg string) error {
 	}
 
 	if _, err = os.Stat(msg); os.IsNotExist(err) {
-		if err := w.SendMessage(msgID, "No Picture Available"); err != nil {
+		if err := w.SendMessage(msgID, msg); err != nil {
 			return w.Proc.Kill()
 		}
 		return w.Proc.Kill()
