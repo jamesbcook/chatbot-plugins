@@ -36,6 +36,10 @@
 
 * Contains a plugin that will take a screenshot of a website and post it to the chat
 
+## Shodan
+
+* Contains a plugin that queries the Shodan api and returns the organization, ASN, hostnames, and ports from a given IP.
+
 ## VirusTotal
 
 * Contains a plugin that queries the VirusTotal api and returns the scan detection results if any exist
