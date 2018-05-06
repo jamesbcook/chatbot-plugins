@@ -49,7 +49,7 @@ type Weather struct {
 //Temperature results of a city
 type Temperature struct {
 	Temp     float32 `json:"temp"`
-	Pressure int     `json:"pressure"`
+	Pressure float32 `json:"pressure"`
 	Humidity int     `json:"humidity"`
 	Min      float32 `json:"temp_min"`
 	Max      float32 `json:"temp_max"`
@@ -99,7 +99,10 @@ func (g getting) Send(msgID, msg string) error {
 	if err != nil {
 		return fmt.Errorf("[Weather Error] in send request %v", err)
 	}
-	return w.SendMessage(msgID, msg)
+	if err := w.SendMessage(msgID, msg); err != nil {
+		return w.Proc.Kill()
+	}
+	return w.Proc.Kill()
 }
 
 func init() {

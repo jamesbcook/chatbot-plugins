@@ -109,7 +109,16 @@ func (g getting) Send(msgID, msg string) error {
 	if err != nil {
 		return fmt.Errorf("[Screenshot Error] in send request %v", err)
 	}
-	return w.Upload(msgID, msg, "Chatbot-Media")
+	if _, err = os.Stat(msg); os.IsNotExist(err) {
+		if err := w.SendMessage(msgID, "No Picture Available"); err != nil {
+			return w.Proc.Kill()
+		}
+		return w.Proc.Kill()
+	}
+	if err := w.Upload(msgID, msg, "Chatbot-Media"); err != nil {
+		return w.Proc.Kill()
+	}
+	return w.Proc.Kill()
 }
 
 func init() {

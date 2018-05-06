@@ -95,7 +95,10 @@ func (g getting) Send(msgID, msg string) error {
 	if err != nil {
 		return fmt.Errorf("[Reddit Error] in send request %v", err)
 	}
-	return w.SendMessage(msgID, msg)
+	if err := w.SendMessage(msgID, msg); err != nil {
+		return w.Proc.Kill()
+	}
+	return w.Proc.Kill()
 }
 
 func main() {}

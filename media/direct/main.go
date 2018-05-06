@@ -77,7 +77,10 @@ func (g getting) Send(msgID, msg string) error {
 	if err != nil {
 		return fmt.Errorf("[Media Error] in send request %v", err)
 	}
-	return w.Upload(msgID, msg, "Chatbot-Media")
+	if err := w.Upload(msgID, msg, "Chatbot-Media"); err != nil {
+		return w.Proc.Kill()
+	}
+	return w.Proc.Kill()
 }
 
 func main() {}

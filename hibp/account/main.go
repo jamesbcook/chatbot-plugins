@@ -104,7 +104,10 @@ func (g getting) Send(msgID, msg string) error {
 	if err != nil {
 		return fmt.Errorf("[HIBP-Account Error] sending message %v", err)
 	}
-	return w.SendMessage(msgID, msg)
+	if err := w.SendMessage(msgID, msg); err != nil {
+		return w.Proc.Kill()
+	}
+	return w.Proc.Kill()
 }
 
 //AllBreachesForAccount returns an array of breaches the account has been seen in
