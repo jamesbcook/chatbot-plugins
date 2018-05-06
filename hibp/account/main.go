@@ -47,7 +47,8 @@ var (
 	//CMD that keybase will use to execute this plugin
 	CMD = "/hibp-email"
 	//Help is what will show in the help menu
-	Help = "/hibp-email {email}"
+	Help         = "/hibp-email {email}"
+	areDebugging = false
 )
 
 type getting string
@@ -58,22 +59,39 @@ var Getter getting
 //Sender export symbol
 var Sender getting
 
+//Debugger export Symbol
+var Debugger getting
+
+func (g getting) Debug(set bool) {
+	areDebugging = set
+}
+
+func debug(input string) {
+	if areDebugging {
+		fmt.Printf("[DEBUG] %s\n", input)
+	}
+}
+
 //Get export method that satisfies an interface in the main program.
 //This Get method will query the hibp account api.
 func (g getting) Get(input string) (string, error) {
+	debug(fmt.Sprintf("Sending %s to HIBP Breach API", input))
 	breachRes, err := hibp.Get(input, allBreachesForAccount)
 	if err != nil {
 		return "", fmt.Errorf("[HIBP-Account Error] There was an error with your beaches request")
 	}
+	debug(fmt.Sprintf("Sending %s to HIBP Pastes API", input))
 	pasteRes, err := hibp.Get(input, allPastesForAccount)
 	if err != nil {
 		return "", fmt.Errorf("[HIBP-Account Error] There was an error with your pastes request")
 	}
 	breaches := []breachedAccount{}
+	debug(fmt.Sprintf("Unmarshaling json for breaches"))
 	if err := json.Unmarshal(breachRes, &breaches); err != nil {
 		return "", fmt.Errorf("[HIBP-Account Error] There was an error unmarshaling your request")
 	}
 	pastes := []pasteAccount{}
+	debug(fmt.Sprintf("Unmarshaling json for pastes"))
 	if err := json.Unmarshal(pasteRes, &pastes); err != nil {
 		return "", fmt.Errorf("[HIBP-Account Error] There was an error unmarshaling your request")
 	}
@@ -94,19 +112,23 @@ func formatOutput(breaches []breachedAccount, pastes []pasteAccount) string {
 		msg += fmt.Sprintf("Name %s ID: %s Source %s\n", paste.Title, paste.ID, paste.Source)
 	}
 	msg += "```"
+	debug(fmt.Sprintf("Returning the following message to user\n%s", msg))
 	return msg
 }
 
 //Send export method that satisfies an interface in the main program.
 //This Send method will send the results to the message ID that sent the request.
 func (g getting) Send(msgID, msg string) error {
+	debug("Starting kbchat")
 	w, err := kbchat.Start("chat")
 	if err != nil {
 		return fmt.Errorf("[HIBP-Account Error] sending message %v", err)
 	}
+	debug(fmt.Sprintf("Sending this message to messageID: %s\n%s", msgID, msg))
 	if err := w.SendMessage(msgID, msg); err != nil {
 		return w.Proc.Kill()
 	}
+	debug("Killing child process")
 	return w.Proc.Kill()
 }
 

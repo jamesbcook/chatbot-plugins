@@ -22,6 +22,9 @@ var Getter getting
 //Sender export symbol
 var Sender getting
 
+//Debugger export Symbol
+var Debugger getting
+
 type chromeData struct {
 	resolution     string
 	timeout        int
@@ -34,7 +37,8 @@ var (
 	//CMD that keybase will use to execute this plugin
 	CMD = "/screenshot"
 	//Help is what will show in the help menu
-	Help = "/screenshot {url}"
+	Help         = "/screenshot {url}"
+	areDebugging = false
 )
 
 const (
@@ -55,6 +59,16 @@ var (
 		"C:/Program Files (x86)/Google/Chrome/Application/chrome.exe",
 	}
 )
+
+func (g getting) Debug(set bool) {
+	areDebugging = set
+}
+
+func debug(input string) {
+	if areDebugging {
+		fmt.Printf("[DEBUG] %s\n", input)
+	}
+}
 
 func shaFileName(fileName string) string {
 	digest := make([]byte, 32)
@@ -88,7 +102,7 @@ func (g getting) Get(query string) (string, error) {
 	basicArguments = append(basicArguments, query)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(90*time.Second))
 	defer cancel()
-
+	debug(fmt.Sprintf("Executing %s with arguments %v", chrome.path, basicArguments))
 	cmd := exec.CommandContext(ctx, chrome.path, basicArguments...)
 	if err := cmd.Start(); err != nil {
 		return "", fmt.Errorf("[Screenshot Error] starting the chrome command %v", err)
@@ -98,6 +112,7 @@ func (g getting) Get(query string) (string, error) {
 			return "", fmt.Errorf("[Screenshot Error] Context time out")
 		}
 	}
+	debug(fmt.Sprintf("Sending filename %s to user", tmpfn))
 	return tmpfn, nil
 }
 
@@ -105,19 +120,24 @@ func (g getting) Get(query string) (string, error) {
 //This Send method will upload the results to the message ID that sent the request,
 //once the file is uploaded it will delete the file.
 func (g getting) Send(msgID, msg string) error {
+	debug("Starting kbchat")
 	w, err := kbchat.Start("chat")
 	if err != nil {
 		return fmt.Errorf("[Screenshot Error] in send request %v", err)
 	}
+	debug("Checking if file exists")
 	if _, err = os.Stat(msg); os.IsNotExist(err) {
+		debug("File didn't exist")
 		if err := w.SendMessage(msgID, "No Picture Available"); err != nil {
 			return w.Proc.Kill()
 		}
 		return w.Proc.Kill()
 	}
+	debug(fmt.Sprintf("Uploading %s to MSGID: %s", msg, msgID))
 	if err := w.Upload(msgID, msg, "Chatbot-Media"); err != nil {
 		return w.Proc.Kill()
 	}
+	debug("Killing child process")
 	return w.Proc.Kill()
 }
 

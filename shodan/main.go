@@ -19,12 +19,26 @@ var Getter getting
 //Sender export symbol
 var Sender getting
 
+//Debugger export Symbol
+var Debugger getting
+
 var (
 	//CMD that keybase will use to execute this plugin
 	CMD = "/shodan"
 	//Help is what will show in the help menu
-	Help = "/shodan {ip}"
+	Help         = "/shodan {ip}"
+	areDebugging = false
 )
+
+func (g getting) Debug(set bool) {
+	areDebugging = set
+}
+
+func debug(input string) {
+	if areDebugging {
+		fmt.Printf("[DEBUG] %s\n", input)
+	}
+}
 
 //Get export method that satisfies an interface in the main program.
 //This Get method will take a query virustotal with the given input
@@ -32,6 +46,7 @@ var (
 func (g getting) Get(input string) (string, error) {
 	api := os.Getenv("CHATBOT_SHODAN")
 	sc := shodan.NewClient(nil, api)
+	debug(fmt.Sprintf("Query Shodan API for %s", input))
 	res, err := sc.GetServicesForHost(context.Background(), input, nil)
 	if err != nil {
 		return "", fmt.Errorf("[Shodan Error] in get request %v", err)
@@ -67,19 +82,23 @@ func (g getting) Get(input string) (string, error) {
 		service += "\n"
 		output += service
 	}
+	debug(fmt.Sprintf("Sending the following to user:\n%s", output))
 	return output, nil
 }
 
 //Send export method that satisfies an interface in the main program.
 //This Send method will respond with the results to the message ID that sent the request.
 func (g getting) Send(msgID, msg string) error {
+	debug("Starting kbchat")
 	w, err := kbchat.Start("chat")
 	if err != nil {
 		return fmt.Errorf("[Shodan Error] in send request %v", err)
 	}
+	debug(fmt.Sprintf("Sending %s to %s", msg, msgID))
 	if err := w.SendMessage(msgID, msg); err != nil {
 		return w.Proc.Kill()
 	}
+	debug("Killing child process")
 	return w.Proc.Kill()
 }
 

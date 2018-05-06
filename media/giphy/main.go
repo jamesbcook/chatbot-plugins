@@ -22,7 +22,8 @@ var (
 	//CMD that keybase will use to execute this plugin
 	CMD = "/giphy"
 	//Help is what will show in the help menu
-	Help = "/giphy {string}"
+	Help         = "/giphy {string}"
+	areDebugging = false
 )
 
 type getting string
@@ -33,6 +34,19 @@ var Getter getting
 //Sender export symbol
 var Sender getting
 
+//Debugger export Symbol
+var Debugger getting
+
+func (g getting) Debug(set bool) {
+	areDebugging = set
+}
+
+func debug(input string) {
+	if areDebugging {
+		fmt.Printf("[DEBUG] %s\n", input)
+	}
+}
+
 func init() {
 	rand.Seed(time.Now().UnixNano())
 }
@@ -41,17 +55,19 @@ func init() {
 func giphy(query string) ([]byte, error) {
 
 	giphy := libgiphy.NewGiphy(os.Getenv("CHATBOT_GIPHY"))
-
+	debug(fmt.Sprintf("Looking for random GIF for %s", query))
 	dataSearch, err := giphy.GetSearch(query, giphySearchLimit, -1, "", "", false)
 	if err != nil {
 		return nil, fmt.Errorf("[Giphy Error] Giphy search error: %v", err)
 	}
+	debug(fmt.Sprintf("Found %d GISF", len(dataSearch.Data)))
 	returnLen := len(dataSearch.Data)
 	if returnLen <= 0 {
 		return nil, fmt.Errorf("[Giphy Error] No gifs found :(")
 	}
 	gifURL := dataSearch.Data[rand.Intn(returnLen)].Images.Downsized.Url
 
+	debug(fmt.Sprintf("Sending GET request to %s", gifURL))
 	// Get the data
 	resp, err := http.Get(gifURL)
 	if err != nil {
@@ -72,6 +88,7 @@ func (g getting) Get(input string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("[Gihpy Error] in Get request %v", err)
 	}
+	debug(fmt.Sprintf("Sending filename %s to user", f))
 	return f, nil
 }
 
@@ -79,20 +96,25 @@ func (g getting) Get(input string) (string, error) {
 //This Send method will upload the results to the message ID that sent the request,
 //once the file is uploaded it will delete the file.
 func (g getting) Send(msgID, msg string) error {
+	debug("Starting kbchat")
 	w, err := kbchat.Start("chat")
 	if err != nil {
 		return fmt.Errorf("[Giphy Error] in send request %v", err)
 	}
 
+	debug("Checking if file exists")
 	if _, err = os.Stat(msg); os.IsNotExist(err) {
+		debug("File didn't exist")
 		if err := w.SendMessage(msgID, msg); err != nil {
 			return w.Proc.Kill()
 		}
 		return w.Proc.Kill()
 	}
+	debug(fmt.Sprintf("Uploading %s to MSGID: %s", msg, msgID))
 	if err := w.Upload(msgID, msg, "Chatbot-Giphy"); err != nil {
 		return w.Proc.Kill()
 	}
+	debug("Killing child process")
 	return w.Proc.Kill()
 }
 
