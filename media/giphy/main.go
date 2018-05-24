@@ -86,7 +86,7 @@ func giphy(query string) ([]byte, error) {
 func (g getting) Get(input string) (string, error) {
 	f, err := media.Setup(input, giphy)
 	if err != nil {
-		return "", fmt.Errorf("[Gihpy Error] in Get request %v", err)
+		return "", fmt.Errorf("[Giphy Error] in Get request %v", err)
 	}
 	debug(fmt.Sprintf("Sending filename %s to user", f))
 	return f, nil

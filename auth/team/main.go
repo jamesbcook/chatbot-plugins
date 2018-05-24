@@ -28,13 +28,14 @@ func errorWriter(writer io.Writer, err error) {
 
 //Start the process of gathering uses based on the team name in the env var.
 func Start(writer io.Writer) {
-	w, err := kbchat.Start("team")
-	if err != nil {
-		errorWriter(writer, fmt.Errorf("[Team Error] getting team api %v", err.Error()))
-		w.Proc.Kill()
-		return
-	}
 	for {
+		w, err := kbchat.Start("team")
+		if err != nil {
+			errorWriter(writer, fmt.Errorf("[Team Error] getting team api %v", err.Error()))
+			w.Proc.Kill()
+			time.Sleep(5 * time.Minute)
+			continue
+		}
 		teamName := os.Getenv("CHATBOT_TEAM")
 		output, err := team.Get(w, teamName, team.Members)
 		if err != nil {
