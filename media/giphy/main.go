@@ -60,7 +60,7 @@ func giphy(query string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("[Giphy Error] Giphy search error: %v", err)
 	}
-	debug(fmt.Sprintf("Found %d GISF", len(dataSearch.Data)))
+	debug(fmt.Sprintf("Found %d Gifs", len(dataSearch.Data)))
 	returnLen := len(dataSearch.Data)
 	if returnLen <= 0 {
 		return nil, fmt.Errorf("[Giphy Error] No gifs found :(")
@@ -110,7 +110,7 @@ func (g getting) Send(msgID, msg string) error {
 		}
 		return w.Proc.Kill()
 	}
-	debug(fmt.Sprintf("Uploading %s to MSGID: %s", msg, msgID))
+	debug(fmt.Sprintf("Uploading %s to msgID: %s", msg, msgID))
 	if err := w.Upload(msgID, msg, "Chatbot-Giphy"); err != nil {
 		return w.Proc.Kill()
 	}

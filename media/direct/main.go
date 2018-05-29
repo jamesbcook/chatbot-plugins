@@ -60,7 +60,7 @@ func url(query string) ([]byte, error) {
 	}
 	header := make([]byte, ctSize)
 	copy(header, buffer)
-	debug(fmt.Sprintf("Checking if %s is a valid content type", header))
+	debug("Checking if file is a valid content type")
 	if validContentType(header) {
 		return buffer, nil
 	}
@@ -105,7 +105,7 @@ func (g getting) Send(msgID, msg string) error {
 		}
 		return w.Proc.Kill()
 	}
-	debug(fmt.Sprintf("Uploading %s to MSGID: %s", msg, msgID))
+	debug(fmt.Sprintf("Uploading %s to msgID: %s", msg, msgID))
 	if err := w.Upload(msgID, msg, "Chatbot-Media"); err != nil {
 		return w.Proc.Kill()
 	}

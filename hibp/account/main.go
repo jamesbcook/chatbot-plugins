@@ -86,14 +86,14 @@ func (g getting) Get(input string) (string, error) {
 		return "", fmt.Errorf("[HIBP-Account Error] There was an error with your pastes request")
 	}
 	breaches := []breachedAccount{}
-	debug(fmt.Sprintf("Unmarshaling json for breaches"))
+	debug(fmt.Sprintf("Unmarshalling json for breaches"))
 	if err := json.Unmarshal(breachRes, &breaches); err != nil {
-		return "", fmt.Errorf("[HIBP-Account Error] There was an error unmarshaling your request")
+		return "", fmt.Errorf("[HIBP-Account Error] There was an error unmarshalling your request")
 	}
 	pastes := []pasteAccount{}
-	debug(fmt.Sprintf("Unmarshaling json for pastes"))
+	debug(fmt.Sprintf("Unmarshalling json for pastes"))
 	if err := json.Unmarshal(pasteRes, &pastes); err != nil {
-		return "", fmt.Errorf("[HIBP-Account Error] There was an error unmarshaling your request")
+		return "", fmt.Errorf("[HIBP-Account Error] There was an error unmarshalling your request")
 	}
 	return formatOutput(breaches, pastes), nil
 }
@@ -138,7 +138,7 @@ func allBreachesForAccount(account string) string {
 	return fullURL
 }
 
-//AllPastesForAccount retuns an array of pastes the account has been seen in
+//AllPastesForAccount returns an array of pastes the account has been seen in
 func allPastesForAccount(account string) string {
 	fullURL := accountURL + pasteAccountURL + account
 	return fullURL

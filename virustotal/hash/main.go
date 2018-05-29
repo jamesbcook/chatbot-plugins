@@ -62,7 +62,7 @@ func (g getting) Get(input string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("[VirusTotal Error] reading body")
 	}
-	debug(fmt.Sprintf("Unmarshaling json with length of %d", len(out)))
+	debug(fmt.Sprintf("Unmarshalling json with length of %d", len(out)))
 	if err := json.Unmarshal(out, vt); err != nil {
 		return "", fmt.Errorf("[VirusTotal Error] unmarshal json")
 	}

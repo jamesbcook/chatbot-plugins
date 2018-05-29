@@ -97,7 +97,7 @@ func (g getting) Get(input string) (string, error) {
 		return "", fmt.Errorf("[Weather Error] reading from resp body %v", err)
 	}
 	o := &OpenWeather{}
-	debug(fmt.Sprintf("Unmarshaling json with length of %d", len(buf.Bytes())))
+	debug(fmt.Sprintf("Unmarshalling json with length of %d", len(buf.Bytes())))
 	if err := json.Unmarshal(buf.Bytes(), o); err != nil {
 		return "", fmt.Errorf("[Weather Error] unmarshalling response %v", err)
 	}

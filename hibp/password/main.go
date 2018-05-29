@@ -77,7 +77,7 @@ func pwnedPassword(password string) string {
 	return fullURL
 }
 
-//pwnedPasswordRange returns a list of hashes that match the first 5 chars that waere sent
+//pwnedPasswordRange returns a list of hashes that match the first 5 chars that were sent
 func pwnedPasswordRange(password string) string {
 	fullURL := passwordURL + rangePasswordURL + password
 	return fullURL

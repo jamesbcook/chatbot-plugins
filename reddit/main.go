@@ -88,7 +88,7 @@ func (g getting) Get(input string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("[Reddit Error] reading from resp body %v", err)
 	}
-	debug(fmt.Sprintf("Unmarshaling json with length of %d", len(buf.Bytes())))
+	debug(fmt.Sprintf("Unmarshalling json with length of %d", len(buf.Bytes())))
 	k := &Kind{}
 	if err := json.Unmarshal(buf.Bytes(), k); err != nil {
 		return "", fmt.Errorf("[Reddit Error] unmarshalling response %v", err)

@@ -77,9 +77,9 @@ func (g getting) Get(input string) (string, error) {
 		return "", fmt.Errorf("[Crypto Error] reading from resp body %v", err)
 	}
 	crypto := []CryptoOutput{}
-	debug(fmt.Sprintf("Unmarshaling json with length of %d", len(buf.Bytes())))
+	debug(fmt.Sprintf("Unmarshalling json with length of %d", len(buf.Bytes())))
 	if err := json.Unmarshal(buf.Bytes(), &crypto); err != nil {
-		return "", fmt.Errorf("[Crypto Error] unmarshaling response %v", err)
+		return "", fmt.Errorf("[Crypto Error] unmarshalling response %v", err)
 	}
 	output := fmt.Sprintf("Name: %-8s\tUSD: %-6s\tBTC: %-10s", crypto[0].Name, crypto[0].PriceUSD, crypto[0].PriceBTC)
 	debug(fmt.Sprintf("Message sending to user\n%s", output))

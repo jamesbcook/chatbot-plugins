@@ -133,7 +133,7 @@ func (g getting) Send(msgID, msg string) error {
 		}
 		return w.Proc.Kill()
 	}
-	debug(fmt.Sprintf("Uploading %s to MSGID: %s", msg, msgID))
+	debug(fmt.Sprintf("Uploading %s to msgID: %s", msg, msgID))
 	if err := w.Upload(msgID, msg, "Chatbot-Media"); err != nil {
 		return w.Proc.Kill()
 	}
