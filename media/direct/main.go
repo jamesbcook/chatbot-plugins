@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -21,6 +22,7 @@ var (
 	//Help is what will show in the help menu
 	Help         = "/media {url}"
 	areDebugging = false
+	debugWriter  *io.Writer
 )
 
 type getting string
@@ -34,13 +36,15 @@ var Sender getting
 //Debugger export Symbol
 var Debugger getting
 
-func (g getting) Debug(set bool) {
+func (g getting) Debug(set bool, writer *io.Writer) {
 	areDebugging = set
+	debugWriter = writer
 }
 
 func debug(input string) {
 	if areDebugging {
-		fmt.Printf("[DEBUG] %s\n", input)
+		output := fmt.Sprintf("[DEBUG] %s\n", input)
+		(*debugWriter).Write([]byte(output))
 	}
 }
 

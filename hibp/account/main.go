@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 
 	"github.com/jamesbcook/chatbot-plugins/hibp"
 	"github.com/jamesbcook/chatbot/kbchat"
@@ -49,6 +50,7 @@ var (
 	//Help is what will show in the help menu
 	Help         = "/hibp-email {email}"
 	areDebugging = false
+	debugWriter  *io.Writer
 )
 
 type getting string
@@ -62,13 +64,15 @@ var Sender getting
 //Debugger export Symbol
 var Debugger getting
 
-func (g getting) Debug(set bool) {
+func (g getting) Debug(set bool, writer *io.Writer) {
 	areDebugging = set
+	debugWriter = writer
 }
 
 func debug(input string) {
 	if areDebugging {
-		fmt.Printf("[DEBUG] %s\n", input)
+		output := fmt.Sprintf("[DEBUG] %s\n", input)
+		(*debugWriter).Write([]byte(output))
 	}
 }
 

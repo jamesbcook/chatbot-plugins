@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/jamesbcook/chatbot/kbchat"
@@ -20,6 +21,7 @@ var (
 	//Help is what will show in the help menu
 	Help         = "/reddit {subreddit}"
 	areDebugging = false
+	debugWriter  *io.Writer
 )
 
 type getting string
@@ -55,13 +57,15 @@ type InnerData struct {
 	Permalink string `json:"permalink"`
 }
 
-func (g getting) Debug(set bool) {
+func (g getting) Debug(set bool, writer *io.Writer) {
 	areDebugging = set
+	debugWriter = writer
 }
 
 func debug(input string) {
 	if areDebugging {
-		fmt.Printf("[DEBUG] %s\n", input)
+		output := fmt.Sprintf("[DEBUG] %s\n", input)
+		(*debugWriter).Write([]byte(output))
 	}
 }
 

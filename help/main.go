@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/jamesbcook/chatbot/kbchat"
 )
@@ -11,9 +12,10 @@ var (
 	CMD = "/help"
 	//Help is what will show in the help menu
 	Help         = "/help this message"
-	version      = "0.8.0"
+	version      = "0.10.0"
 	msg          string
 	areDebugging = false
+	debugWriter  *io.Writer
 )
 
 type getting string
@@ -31,13 +33,15 @@ const (
 	header = "ChatBot v%s\n*Accepted Commands:*\n"
 )
 
-func (g getting) Debug(set bool) {
+func (g getting) Debug(set bool, writer *io.Writer) {
 	areDebugging = set
+	debugWriter = writer
 }
 
 func debug(input string) {
 	if areDebugging {
-		fmt.Printf("[DEBUG] %s\n", input)
+		output := fmt.Sprintf("[DEBUG] %s\n", input)
+		(*debugWriter).Write([]byte(output))
 	}
 }
 

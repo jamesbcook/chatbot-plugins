@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -23,6 +24,7 @@ var (
 	//Help is what will show in the help menu
 	Help         = "/weather {city}"
 	areDebugging = false
+	debugWriter  *io.Writer
 )
 
 type getting string
@@ -64,13 +66,15 @@ type Wind struct {
 	Speed float32 `json:"speed"`
 }
 
-func (g getting) Debug(set bool) {
+func (g getting) Debug(set bool, writer *io.Writer) {
 	areDebugging = set
+	debugWriter = writer
 }
 
 func debug(input string) {
 	if areDebugging {
-		fmt.Printf("[DEBUG] %s\n", input)
+		output := fmt.Sprintf("[DEBUG] %s\n", input)
+		(*debugWriter).Write([]byte(output))
 	}
 }
 
