@@ -32,7 +32,6 @@ func Start(writer io.Writer) {
 		w, err := kbchat.Start("team")
 		if err != nil {
 			errorWriter(writer, fmt.Errorf("[Team Error] getting team api %v", err.Error()))
-			w.Proc.Kill()
 			time.Sleep(5 * time.Minute)
 			continue
 		}
@@ -45,6 +44,9 @@ func Start(writer io.Writer) {
 		users = make([]string, len(output))
 		for x, user := range output {
 			users[x] = user.Username
+		}
+		if err := w.Proc.Kill(); err != nil {
+			errorWriter(writer, fmt.Errorf("[Team Error] killing process %v", err))
 		}
 		time.Sleep(5 * time.Minute)
 	}
