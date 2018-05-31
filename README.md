@@ -36,6 +36,10 @@
 
 * Contains a plugin that will take a screenshot of a website and post it to the chat
 
+## URL Shortener
+
+* Contains a plugin that will return a shortened URL version of the requested URL
+
 ## Shodan
 
 * Contains a plugin that queries the Shodan api and returns the organization, ASN, hostnames, and ports from a given IP.
