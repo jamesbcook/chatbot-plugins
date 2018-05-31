@@ -28,6 +28,14 @@
 * The giphy plugin will pick and random gif based on user input and post it to chat
 * The media plugin will take a url and attempt to upload the img or gif to chat
 
+## Rate Limit
+
+* The default time between commands a user can send is 2.5 seconds
+    * If a user breaks this rule the timer gets reset on their account
+* The default broken rules limit is 10
+    * If a user breaks the rule limit their time between commands grows by a second
+    * Every time they break the rule an extra second gets added to their wait time.
+
 ## Reddit
 
 * Contains a plugin that queries a subreddit and returns the top 10 posts
