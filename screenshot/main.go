@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -39,6 +40,7 @@ var (
 	//Help is what will show in the help menu
 	Help         = "/screenshot {url}"
 	areDebugging = false
+	debugWriter  *io.Writer
 )
 
 const (
@@ -60,13 +62,15 @@ var (
 	}
 )
 
-func (g getting) Debug(set bool) {
+func (g getting) Debug(set bool, writer *io.Writer) {
 	areDebugging = set
+	debugWriter = writer
 }
 
 func debug(input string) {
 	if areDebugging {
-		fmt.Printf("[DEBUG] %s\n", input)
+		output := fmt.Sprintf("[DEBUG] %s\n", input)
+		(*debugWriter).Write([]byte(output))
 	}
 }
 

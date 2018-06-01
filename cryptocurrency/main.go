@@ -214,4 +214,8 @@ func (g getting) Send(msgID, msg string) error {
 	return w.Proc.Kill()
 }
 
+func init() {
+	go updateListing()
+}
+
 func main() {}
