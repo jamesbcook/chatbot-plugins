@@ -105,6 +105,8 @@ func debug(input string) {
 }
 
 func updateListing() {
+	//If debug is passed this breaks it, so we wait some time until everything is loaded
+	time.Sleep(40 * time.Second)
 	for {
 		l := &listing{}
 		req, err := http.NewRequest("GET", listingURL, nil)
