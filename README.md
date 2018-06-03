@@ -28,6 +28,10 @@
 * The giphy plugin will pick and random gif based on user input and post it to chat
 * The media plugin will take a url and attempt to upload the img or gif to chat
 
+## Nmap
+
+* Contains a plugin will query the Nmap api and return the scan results
+
 ## Rate Limit
 
 * The default time between commands a user can send is 2.5 seconds
