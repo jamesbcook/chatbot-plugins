@@ -210,7 +210,10 @@ func (g getting) Send(msgID, msg string) error {
 	}
 	debug(fmt.Sprintf("Sending this message to messageID: %s\n%s", msgID, msg))
 	if err := w.SendMessage(msgID, msg); err != nil {
-		return w.Proc.Kill()
+		if err := w.Proc.Kill(); err != nil {
+			return err
+		}
+		return err
 	}
 	debug("Killing child process")
 	return w.Proc.Kill()

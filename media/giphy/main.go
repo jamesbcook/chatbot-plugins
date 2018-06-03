@@ -110,13 +110,19 @@ func (g getting) Send(msgID, msg string) error {
 	if _, err = os.Stat(msg); os.IsNotExist(err) {
 		debug("File didn't exist")
 		if err := w.SendMessage(msgID, msg); err != nil {
-			return w.Proc.Kill()
+			if err := w.Proc.Kill(); err != nil {
+				return err
+			}
+			return err
 		}
 		return w.Proc.Kill()
 	}
 	debug(fmt.Sprintf("Uploading %s to msgID: %s", msg, msgID))
 	if err := w.Upload(msgID, msg, "Chatbot-Giphy"); err != nil {
-		return w.Proc.Kill()
+		if err := w.Proc.Kill(); err != nil {
+			return err
+		}
+		return err
 	}
 	debug("Killing child process")
 	return w.Proc.Kill()
