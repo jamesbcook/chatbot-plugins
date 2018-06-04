@@ -98,15 +98,13 @@ func (g getting) Debug(set bool, writer *io.Writer) {
 }
 
 func debug(input string) {
-	if areDebugging {
+	if areDebugging && debugWriter != nil {
 		output := fmt.Sprintf("[DEBUG] %s\n", input)
 		(*debugWriter).Write([]byte(output))
 	}
 }
 
 func updateListing() {
-	//If debug is passed this breaks it, so we wait some time until everything is loaded
-	time.Sleep(40 * time.Second)
 	for {
 		l := &listing{}
 		req, err := http.NewRequest("GET", listingURL, nil)
