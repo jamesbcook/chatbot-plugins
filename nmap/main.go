@@ -40,7 +40,7 @@ func (g getting) Debug(set bool, writer *io.Writer) {
 }
 
 func debug(input string) {
-	if areDebugging {
+	if areDebugging && debugWriter != nil {
 		output := fmt.Sprintf("[DEBUG] %s\n", input)
 		(*debugWriter).Write([]byte(output))
 	}
@@ -117,55 +117,51 @@ func randomSecretKey() error {
 	return nil
 }
 
+func loadFile(input string) ([]byte, error) {
+	f, err := os.Open(input)
+	if err != nil {
+		return nil, err
+	}
+	output, err := ioutil.ReadAll(f)
+	if err != nil {
+		if err := randomSecretKey(); err != nil {
+			return nil, err
+		}
+		return nil, err
+	}
+	return output, nil
+}
+
+func decodeHex(input []byte) ([]byte, error) {
+	output := make([]byte, hex.DecodedLen(len(input)))
+	_, err := hex.Decode(output, input)
+	if err != nil {
+		if err := randomSecretKey(); err != nil {
+			return nil, err
+		}
+	}
+	return output, err
+}
+
 func init() {
-	//Give the debug var time to get set
-	//time.Sleep(40 * time.Second)
-	privFile, err := os.Open("key.priv")
+	priv, err := loadFile("key.priv")
 	if err != nil {
-		log.Println("Couldn't open key.priv file")
-		if err := randomSecretKey(); err != nil {
-			log.Println(err)
-		}
+		log.Println(err)
 		return
 	}
-	pubFile, err := os.Open("key.pub")
+	pub, err := loadFile("key.pub")
 	if err != nil {
-		log.Println("Couldn't open key.pub file")
-		if err := randomSecretKey(); err != nil {
-			log.Println(err)
-		}
+		log.Println(err)
 		return
 	}
-	priv, err := ioutil.ReadAll(privFile)
+	decodePriv, err := decodeHex(priv)
 	if err != nil {
-		log.Println("Couldn't read key.priv file")
-		if err := randomSecretKey(); err != nil {
-			log.Println(err)
-		}
+		log.Println(err)
 		return
 	}
-	pub, err := ioutil.ReadAll(pubFile)
+	decodePub, err := decodeHex(pub)
 	if err != nil {
-		log.Println("Couldn't read key.pub file")
-		if err := randomSecretKey(); err != nil {
-			log.Println(err)
-		}
-		return
-	}
-	decodePriv, err := hex.DecodeString(string(priv))
-	if err != nil {
-		log.Println("Couldn't decode priv hex")
-		if err := randomSecretKey(); err != nil {
-			log.Println(err)
-		}
-		return
-	}
-	decodePub, err := hex.DecodeString(string(pub))
-	if err != nil {
-		log.Println("Couldn't decode pub hex")
-		if err := randomSecretKey(); err != nil {
-			log.Println(err)
-		}
+		log.Println(err)
 		return
 	}
 	debug("Setting key pair")
