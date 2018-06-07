@@ -44,6 +44,10 @@
 
 * Contains a plugin that queries a subreddit and returns the top 10 posts
 
+## RemindMe
+
+* Contains a plugin that will allow a user to set reminder
+
 ## Screenshot
 
 * Contains a plugin that will take a screenshot of a website and post it to the chat
@@ -55,6 +59,10 @@
 ## Shodan
 
 * Contains a plugin that queries the Shodan api and returns the organization, ASN, hostnames, and ports from a given IP.
+
+## StrawPoll
+
+* Contains a plugin that allows a user to create and query strawpolls from strawpoll.me
 
 ## VirusTotal
 
