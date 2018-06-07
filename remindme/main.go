@@ -56,14 +56,17 @@ func debug(input string) {
 }
 
 func minuteFunc() time.Duration {
+	debug("minute reminder")
 	return time.Minute
 }
 
 func hourFunc() time.Duration {
+	debug("hour reminder")
 	return time.Hour
 }
 
 func dayFunc() time.Duration {
+	debug("day reminder")
 	return time.Hour * 24
 }
 
@@ -89,6 +92,7 @@ func getReminder() {
 //Get export method that satisfies an interface in the main program.
 //This Get method will query reddit json api.
 func (g getting) Get(input string) (string, error) {
+	debug(fmt.Sprintf("Got input %s", input))
 	args := strings.Split(input, " ")
 	if len(args) <= 2 {
 		return "", fmt.Errorf("Not enough arguments")
@@ -99,6 +103,7 @@ func (g getting) Get(input string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("%s is not an int", num)
 	}
+	debug(fmt.Sprintf("Checking if %s is valid", duration))
 	if minute.MatchString(duration) ||
 		hour.MatchString(duration) ||
 		day.MatchString(duration) {
@@ -110,6 +115,7 @@ func (g getting) Get(input string) (string, error) {
 //Send export method that satisfies an interface in the main program.
 //This Send method will send the results to the message ID that sent the request.
 func (g getting) Send(msgID, msg string) error {
+	debug(fmt.Sprintf("Got message %s from ID %s", msg, msgID))
 	args := strings.Split(msg, " ")
 	num := args[0]
 	duration := args[1]
@@ -119,6 +125,7 @@ func (g getting) Send(msgID, msg string) error {
 		return fmt.Errorf("%s is not an int", num)
 	}
 	reminder := &remindBucket{}
+	debug(fmt.Sprintf("Finding correct function for %s", duration))
 	if minute.MatchString(duration) {
 		reminder = setRemindMe(numInt, message, minuteFunc)
 	} else if hour.MatchString(duration) {
@@ -126,9 +133,12 @@ func (g getting) Send(msgID, msg string) error {
 	} else if day.MatchString(duration) {
 		reminder = setRemindMe(numInt, message, dayFunc)
 	}
+	debug(fmt.Sprintf("Adding %v to reminders", reminder))
 	reminder.Sender = msgID
 	reminders = append(reminders, reminder)
+	debug(fmt.Sprintf("Number of reminders now %d", len(reminders)))
 	t := fmt.Sprintf("Your reminder is set for %s", reminder.T.Format("2006 Jan 2 15:04:05 UTC"))
+	debug(fmt.Sprintf("Sending %s to user", t))
 	return send(msgID, t)
 }
 
