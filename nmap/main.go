@@ -10,15 +10,20 @@ import (
 	"strings"
 
 	"github.com/jamesbcook/chatbot-external-api/api"
+	"github.com/jamesbcook/chatbot-external-api/filesystem"
 	"github.com/jamesbcook/chatbot-external-api/network"
 	"github.com/jamesbcook/chatbot/kbchat"
+)
+
+const (
+	app = "nmap"
 )
 
 var (
 	//CMD that keybase will use to execute this plugin
 	CMD = "/nmap"
 	//Help is what will show in the help menu
-	Help         = `/nmap {"apiIP:apiPort" "nmap args" }`
+	Help         = `/nmap {info|apiIP:apiPort nmap args}`
 	areDebugging = false
 	debugWriter  *io.Writer
 )
@@ -51,17 +56,15 @@ func debug(input string) {
 //given nmap arguments and return the results of the scan.
 func (g getting) Get(input string) (string, error) {
 	debug(fmt.Sprintf("Got %s for input", input))
-	output := strings.FieldsFunc(input, func(c rune) bool {
-		if c != '"' {
-			return false
-		}
-		return true
-	})
-	if len(output) != 3 {
-		return "", fmt.Errorf("Not enough arguments")
+	args := strings.Split(input, " ")
+	if args[0] == "info" {
+		var output string
+		output = fmt.Sprintf("Use the following key for authentication\n")
+		output += fmt.Sprintf("Public Key:%s", network.GetIdentityKey())
+		return output, nil
 	}
-	server := output[0]
-	args := output[2]
+	server := args[0]
+	nmapArgs := strings.Join(args[1:], " ")
 	debug(fmt.Sprintf("Connecting to %s", server))
 	s, err := network.Dial("tcp", server)
 	if err != nil {
@@ -70,7 +73,7 @@ func (g getting) Get(input string) (string, error) {
 	defer s.Close()
 	msg := &api.Message{}
 	msg.ID = api.MessageID_Nmap
-	msg.IO = []byte(args)
+	msg.IO = []byte(nmapArgs)
 	debug("Sending encrypted message")
 	if err := s.SendEncryptedMsg(msg); err != nil {
 		return "", err
@@ -96,7 +99,7 @@ func (g getting) Send(msgID, msg string) error {
 	debug("Starting kbchat")
 	w, err := kbchat.Start("chat")
 	if err != nil {
-		return fmt.Errorf("[Reddit Error] in send request %v", err)
+		return fmt.Errorf("[Nmap Error] in send request %v", err)
 	}
 	debug(fmt.Sprintf("Sending this message to messageID: %s\n%s", msgID, msg))
 	if err := w.SendMessage(msgID, msg); err != nil {
@@ -109,9 +112,27 @@ func (g getting) Send(msgID, msg string) error {
 	return w.Proc.Kill()
 }
 
+func saveFile(fileName string, input []byte) error {
+	return ioutil.WriteFile(fileName, input, 0400)
+}
+
 func randomSecretKey() error {
 	debug("Generating random secret key pair")
 	if err := network.GenerateSecretKeyPair(); err != nil {
+		return err
+	}
+	skFile, err := filesystem.GetPrivateKeyFile(app)
+	if err != nil {
+		return err
+	}
+	pkFile, err := filesystem.GetPublicKeyFile(app)
+	if err != nil {
+		return err
+	}
+	if err := saveFile(skFile, []byte(network.GetSecretKey())); err != nil {
+		return err
+	}
+	if err := saveFile(pkFile, []byte(network.GetIdentityKey())); err != nil {
 		return err
 	}
 	return nil
@@ -124,53 +145,53 @@ func loadFile(input string) ([]byte, error) {
 	}
 	output, err := ioutil.ReadAll(f)
 	if err != nil {
-		if err := randomSecretKey(); err != nil {
-			return nil, err
-		}
 		return nil, err
 	}
-	return output, nil
+	return decodeHex(output)
 }
 
 func decodeHex(input []byte) ([]byte, error) {
 	output := make([]byte, hex.DecodedLen(len(input)))
 	_, err := hex.Decode(output, input)
 	if err != nil {
-		if err := randomSecretKey(); err != nil {
-			return nil, err
-		}
+		return nil, err
 	}
 	return output, err
 }
 
 func init() {
-	priv, err := loadFile("key.priv")
+	skFile, err := filesystem.GetPrivateKeyFile(app)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	pub, err := loadFile("key.pub")
+	pkFile, err := filesystem.GetPublicKeyFile(app)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	decodePriv, err := decodeHex(priv)
+	priv, err := loadFile(skFile)
 	if err != nil {
 		log.Println(err)
-		return
-	}
-	decodePub, err := decodeHex(pub)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	debug("Setting key pair")
-	if err := network.SetSecretKeyPair(decodePriv, decodePub); err != nil {
-		log.Println("Couldn't set secret key pair")
 		if err := randomSecretKey(); err != nil {
 			log.Println(err)
 		}
 		return
+	}
+	pub, err := loadFile(pkFile)
+	if err != nil {
+		log.Println(err)
+		if err := randomSecretKey(); err != nil {
+			log.Println(err)
+		}
+		return
+	}
+	debug("Setting key pair")
+	if err := network.SetSecretKeyPair(priv, pub); err != nil {
+		log.Println("Couldn't set secret key pair")
+		if err := randomSecretKey(); err != nil {
+			log.Println(err)
+		}
 	}
 }
 

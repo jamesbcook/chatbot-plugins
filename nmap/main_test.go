@@ -51,11 +51,22 @@ func setuplistener(t *testing.T) {
 	s.Close()
 }
 
+func TestInfo(t *testing.T) {
+	output, err := Getter.Get("info")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(output) <= 0 {
+		t.Fatalf("Size of output %d", len(output))
+	}
+	t.Logf("Output:\n%s", output)
+}
+
 func TestGet(t *testing.T) {
 	go setuplistener(t)
 	server := fmt.Sprintf("localhost:%d", port)
 	args := fmt.Sprintf("-p %d localhost", port)
-	input := fmt.Sprintf(`"%s" "%s"`, server, args)
+	input := fmt.Sprintf("%s %s", server, args)
 	results, err := Getter.Get(input)
 	if err != nil {
 		t.Errorf("Error in Get %v", err)
@@ -70,7 +81,7 @@ func TestSend(t *testing.T) {
 	go setuplistener(t)
 	server := fmt.Sprintf("localhost:%d", port)
 	args := fmt.Sprintf("-p %d localhost", port)
-	input := fmt.Sprintf(`"%s" "%s"`, server, args)
+	input := fmt.Sprintf("%s %s", server, args)
 	results, err := Getter.Get(input)
 	if err != nil {
 		t.Errorf("Error in Get %v", err)
