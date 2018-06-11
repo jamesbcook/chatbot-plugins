@@ -1,5 +1,9 @@
 # Chatbot Plugins
 
+## API
+
+* Contains a plugin that setups up a listener on port 55449 which then can be used to push data to keybase channels
+
 ## Auth
 
 * Contains plugins to limit access who can send commands to the bot
