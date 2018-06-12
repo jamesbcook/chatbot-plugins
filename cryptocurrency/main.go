@@ -191,7 +191,7 @@ func (g getting) Get(input string) (string, error) {
 		debug(errMsg.Error())
 		return "", errMsg
 	}
-	output := fmt.Sprintf("Name: %-8s\tUSD: %-6.2f\tBTC: %-10.10f", t.Data.Name, t.Data.Quotes.USD.Price, t.Data.Quotes.BTC.Price)
+	output := fmt.Sprintf("Name: %-8s\tUSD: %-6.2f\tBTC: %-10.9f", t.Data.Name, t.Data.Quotes.USD.Price, t.Data.Quotes.BTC.Price)
 	debug(fmt.Sprintf("Returning %s", output))
 	return output, nil
 }

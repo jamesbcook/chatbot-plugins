@@ -12,7 +12,7 @@ var (
 	CMD = "/help"
 	//Help is what will show in the help menu
 	Help         = "/help this message"
-	version      = "0.14.0"
+	version      = "0.14.1"
 	msg          string
 	areDebugging = false
 	debugWriter  *io.Writer

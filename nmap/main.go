@@ -61,7 +61,7 @@ func (g getting) Get(input string) (string, error) {
 	if args[0] == "info" {
 		var output string
 		output = fmt.Sprintf("Use the following key for authentication\n")
-		output += fmt.Sprintf("Public Key:%s", network.GetIdentityKey())
+		output += fmt.Sprintf("Public Key: %s", network.GetIdentityKey())
 		return output, nil
 	}
 	server := args[0]
