@@ -162,7 +162,7 @@ func handle(session *network.Session) {
 			session.Close()
 			return
 		}
-		if !validKey(session.Keys.TheirIdentityKey) {
+		if !validKey(session.Keys.TheirIdentityKey[:]) {
 			session.Close()
 			return
 		}
