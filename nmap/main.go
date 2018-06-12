@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"os"
 	"strings"
 
@@ -70,26 +71,32 @@ func (g getting) Get(input string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer s.Close()
 	msg := &api.Message{}
 	msg.ID = api.MessageID_Nmap
 	msg.IO = []byte(nmapArgs)
 	debug("Sending encrypted message")
 	if err := s.SendEncryptedMsg(msg); err != nil {
+		s.Close()
 		return "", err
 	}
 	debug("Receive encrypted message")
 	recv, err := s.ReceiveEncryptedMsg()
 	if err != nil {
+		s.Close()
 		return "", err
 	}
 	msg.ID = api.MessageID_Done
-	msg.IO = make([]byte, 1)
+	length := rand.Intn(48)
+	buf := make([]byte, length)
+	rand.Read(buf)
+	msg.IO = buf
 	debug("Sending Done")
 	if err := s.SendEncryptedMsg(msg); err != nil {
+		s.Close()
 		return "", err
 	}
 	debug(fmt.Sprintf("Returning %s", recv.IO))
+	s.Close()
 	return string(recv.IO), nil
 }
 
