@@ -13,27 +13,17 @@ import (
 	"github.com/jamesbcook/chatbot/kbchat"
 )
 
-type getting string
+type activePlugin string
 
-//Getter export symbol
-var Getter getting
-
-//Sender export symbol
-var Sender getting
-
-//Debugger export Symbol
-var Debugger getting
+//AP for export
+var AP activePlugin
 
 var (
-	//CMD that keybase will use to execute this plugin
-	CMD = "/virustotal"
-	//Help is what will show in the help menu
-	Help         = "/virustotal {sha256 of file}"
 	areDebugging = false
 	debugWriter  *io.Writer
 )
 
-func (g getting) Debug(set bool, writer *io.Writer) {
+func (a activePlugin) Debug(set bool, writer *io.Writer) {
 	areDebugging = set
 	debugWriter = writer
 }
@@ -45,6 +35,16 @@ func debug(input string) {
 	}
 }
 
+//CMD that keybase will use to execute this plugin
+func (a activePlugin) CMD() string {
+	return "/virustotal"
+}
+
+//Help is what will show in the help menu
+func (a activePlugin) Help() string {
+	return "/virustotal {sha256 of file}"
+}
+
 func getURL() string {
 	return fmt.Sprintf("%s/%s", virustotal.BaseURL, "report?apikey=%s&resource=%s")
 }
@@ -52,7 +52,7 @@ func getURL() string {
 //Get export method that satisfies an interface in the main program.
 //This Get method will take a query virustotal with the given input
 //and return the results of that file.
-func (g getting) Get(input string) (string, error) {
+func (a activePlugin) Get(input string) (string, error) {
 	vt := &virustotal.Response{}
 	api := os.Getenv("CHATBOT_VIRUSTOTAL")
 	query := fmt.Sprintf(getURL(), api, input)
@@ -87,7 +87,7 @@ func (g getting) Get(input string) (string, error) {
 
 //Send export method that satisfies an interface in the main program.
 //This Send method will respond with the results to the message ID that sent the request.
-func (g getting) Send(msgID, msg string) error {
+func (a activePlugin) Send(msgID, msg string) error {
 	debug("Starting kbchat")
 	w, err := kbchat.Start("chat")
 	if err != nil {

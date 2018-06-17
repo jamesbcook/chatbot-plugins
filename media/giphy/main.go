@@ -20,26 +20,16 @@ const (
 )
 
 var (
-	//CMD that keybase will use to execute this plugin
-	CMD = "/giphy"
-	//Help is what will show in the help menu
-	Help         = "/giphy {string}"
 	areDebugging = false
 	debugWriter  *io.Writer
 )
 
-type getting string
+type activePlugin string
 
-//Getter export symbol
-var Getter getting
+//AP for export
+var AP activePlugin
 
-//Sender export symbol
-var Sender getting
-
-//Debugger export Symbol
-var Debugger getting
-
-func (g getting) Debug(set bool, writer *io.Writer) {
+func (a activePlugin) Debug(set bool, writer *io.Writer) {
 	areDebugging = set
 	debugWriter = writer
 }
@@ -49,6 +39,16 @@ func debug(input string) {
 		output := fmt.Sprintf("[DEBUG] %s\n", input)
 		(*debugWriter).Write([]byte(output))
 	}
+}
+
+//CMD that keybase will use to execute this plugin
+func (a activePlugin) CMD() string {
+	return "/giphy"
+}
+
+//Help is what will show in the help menu
+func (a activePlugin) Help() string {
+	return "/giphy {string}"
 }
 
 func init() {
@@ -87,7 +87,7 @@ func giphy(query string) ([]byte, error) {
 
 //Get export method that satisfies an interface in the main program.
 //This Get method will query the giphy api.
-func (g getting) Get(input string) (string, error) {
+func (a activePlugin) Get(input string) (string, error) {
 	f, err := media.Setup(input, giphy)
 	if err != nil {
 		return "", fmt.Errorf("[Giphy Error] in Get request %v", err)
@@ -99,7 +99,7 @@ func (g getting) Get(input string) (string, error) {
 //Send export method that satisfies an interface in the main program.
 //This Send method will upload the results to the message ID that sent the request,
 //once the file is uploaded it will delete the file.
-func (g getting) Send(msgID, msg string) error {
+func (a activePlugin) Send(msgID, msg string) error {
 	debug("Starting kbchat")
 	w, err := kbchat.Start("chat")
 	if err != nil {

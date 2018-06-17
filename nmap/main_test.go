@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/jamesbcook/chatbot-external-api/api"
 	"github.com/jamesbcook/chatbot-external-api/network"
@@ -24,35 +25,36 @@ func scan(args []byte) ([]byte, error) {
 	return out, nil
 }
 
-func setuplistener(t *testing.T) {
+func setuplistener() error {
 	server := fmt.Sprintf("localhost:%d", port)
 	listener, err := network.Listen("tcp", server)
 	if err != nil {
-		t.Errorf("Couldn't set up listener %v", err)
+		return fmt.Errorf("Couldn't set up listener %v", err)
 	}
 	s, err := listener.Accept()
 	if err != nil {
-		t.Fatal(err)
+		return err
 	}
 	msg, err := s.ReceiveEncryptedMsg()
 	if err != nil {
-		t.Fatal(err)
+		return err
 	}
 	res, err := scan(msg.IO)
 	if err != nil {
-		t.Fatal(err)
+		return err
 	}
 	m := &api.Message{}
 	m.ID = api.MessageID_Response
 	m.IO = []byte(res)
 	if err := s.SendEncryptedMsg(m); err != nil {
-		t.Fatal(err)
+		return err
 	}
 	s.Close()
+	return nil
 }
 
 func TestInfo(t *testing.T) {
-	output, err := Getter.Get("info")
+	output, err := AP.Get("info")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,11 +65,18 @@ func TestInfo(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	go setuplistener(t)
+	go func() {
+		err := setuplistener()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
+	time.Sleep(1 * time.Second)
 	server := fmt.Sprintf("localhost:%d", port)
 	args := fmt.Sprintf("-p %d localhost", port)
 	input := fmt.Sprintf("%s %s", server, args)
-	results, err := Getter.Get(input)
+	t.Log(input)
+	results, err := AP.Get(input)
 	if err != nil {
 		t.Errorf("Error in Get %v", err)
 	}
@@ -78,11 +87,11 @@ func TestGet(t *testing.T) {
 }
 
 func TestSend(t *testing.T) {
-	go setuplistener(t)
+	go setuplistener()
 	server := fmt.Sprintf("localhost:%d", port)
 	args := fmt.Sprintf("-p %d localhost", port)
 	input := fmt.Sprintf("%s %s", server, args)
-	results, err := Getter.Get(input)
+	results, err := AP.Get(input)
 	if err != nil {
 		t.Errorf("Error in Get %v", err)
 	}
@@ -90,7 +99,7 @@ func TestSend(t *testing.T) {
 	if len(results) == 0 {
 		t.Errorf("Length of results is 0, this shouldn't be")
 	}
-	if err := Sender.Send(chatID, results); err != nil {
+	if err := AP.Send(chatID, results); err != nil {
 		t.Fatalf("Error sending command to keybase %v", err)
 	}
 }

@@ -7,7 +7,7 @@ import (
 )
 
 func TestStart(t *testing.T) {
-	go Start(os.Stdout)
+	go Auth.Start()
 	time.Sleep(2 * time.Second)
 }
 
@@ -17,13 +17,13 @@ func TestValidate(t *testing.T) {
 	if err := os.Setenv("CHATBOT_TEAM", ""); err != nil {
 		t.Fatalf("Error getting env var %v", err)
 	}
-	go Start(os.Stdout)
+	go Auth.Start()
 	time.Sleep(2 * time.Second)
-	if !Validate(expected) {
+	if !Auth.Validate(expected) {
 		t.Fatalf("Error validating user %s", expected)
 	}
 
-	if Validate(notExpected) {
+	if Auth.Validate(notExpected) {
 		t.Fatalf("Error validated an unexpected user %s", notExpected)
 	}
 

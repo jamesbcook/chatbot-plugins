@@ -16,24 +16,14 @@ const (
 )
 
 var (
-	//CMD that keybase will use to execute this plugin
-	CMD = "/reddit"
-	//Help is what will show in the help menu
-	Help         = "/reddit {subreddit}"
 	areDebugging = false
 	debugWriter  *io.Writer
 )
 
-type getting string
+type activePlugin string
 
-//Getter export symbol
-var Getter getting
-
-//Sender export symbol
-var Sender getting
-
-//Debugger export Symbol
-var Debugger getting
+//AP for export
+var AP activePlugin
 
 //Kind of response from reddit
 type Kind struct {
@@ -57,7 +47,7 @@ type InnerData struct {
 	Permalink string `json:"permalink"`
 }
 
-func (g getting) Debug(set bool, writer *io.Writer) {
+func (a activePlugin) Debug(set bool, writer *io.Writer) {
 	areDebugging = set
 	debugWriter = writer
 }
@@ -69,9 +59,19 @@ func debug(input string) {
 	}
 }
 
+//CMD that keybase will use to execute this plugin
+func (a activePlugin) CMD() string {
+	return "/reddit"
+}
+
+//Help is what will show in the help menu
+func (a activePlugin) Help() string {
+	return "/reddit {subreddit}"
+}
+
 //Get export method that satisfies an interface in the main program.
 //This Get method will query reddit json api.
-func (g getting) Get(input string) (string, error) {
+func (a activePlugin) Get(input string) (string, error) {
 	url := fmt.Sprintf(urlFMT, input)
 	client := &http.Client{}
 	debug(fmt.Sprintf("Creating GET request to %s", url))
@@ -113,7 +113,7 @@ func (g getting) Get(input string) (string, error) {
 
 //Send export method that satisfies an interface in the main program.
 //This Send method will send the results to the message ID that sent the request.
-func (g getting) Send(msgID, msg string) error {
+func (a activePlugin) Send(msgID, msg string) error {
 	debug("Starting kbchat")
 	w, err := kbchat.Start("chat")
 	if err != nil {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -8,24 +9,42 @@ import (
 	"time"
 )
 
-var (
-	//Name that keybase will use for background plugins
-	Name = "auth"
-)
+type backgroundPlugin string
+type authenticator string
+
+//BP for export
+var BP backgroundPlugin
+
+//Auth for export
+var Auth authenticator
 
 var (
-	users = []string{}
+	users        = []string{}
+	areDebugging = false
+	debugWriter  *io.Writer
 )
 
-func errorWriter(writer io.Writer, err error) {
-	output := []byte(err.Error())
-	output = append(output, '\n')
-	writer.Write(output)
+//Debug output
+func (b backgroundPlugin) Debug(set bool, writer *io.Writer) {
+	areDebugging = set
+	debugWriter = writer
+}
+
+func debug(input string) {
+	if areDebugging && debugWriter != nil {
+		output := fmt.Sprintf("[DEBUG] %s\n", input)
+		(*debugWriter).Write([]byte(output))
+	}
+}
+
+//Name that keybase will use for background plugins
+func (b backgroundPlugin) Name() string {
+	return "auth"
 }
 
 //Start the process of gathering uses based on the user names seperated by ","
 //in the env var.
-func Start(writer io.Writer) {
+func (a authenticator) Start() {
 	for {
 		userEnv := os.Getenv("CHATBOT_USERS")
 		for _, user := range strings.Split(userEnv, ",") {
@@ -36,7 +55,7 @@ func Start(writer io.Writer) {
 }
 
 //Validate that a user is  allowed to send commands to the bot
-func Validate(user string) bool {
+func (a authenticator) Validate(user string) bool {
 	for _, u := range users {
 		if user == u {
 			return true

@@ -7,7 +7,7 @@ const (
 )
 
 func TestGet(t *testing.T) {
-	res, err := Getter.Get("Helper\nTesting")
+	res, err := AP.Get("Helper\nTesting")
 	if err != nil {
 		t.Fatalf("Error in get request %v", err)
 	}
@@ -17,18 +17,18 @@ func TestGet(t *testing.T) {
 }
 
 func TestSend(t *testing.T) {
-	_, err := Getter.Get("Helper\nTesting")
+	_, err := AP.Get("Helper\nTesting")
 	if err != nil {
 		t.Fatalf("Error in get request %v", err)
 	}
-	res, err := Getter.Get("")
+	res, err := AP.Get("")
 	if err != nil {
 		t.Fatalf("Error in get request %v", err)
 	}
 	if res == "" {
 		t.Fatalf("Results should not be empty the second time")
 	}
-	if err := Sender.Send(chatID, res); err != nil {
+	if err := AP.Send(chatID, res); err != nil {
 		t.Fatalf("Error sending to keybase %v", err)
 	}
 }

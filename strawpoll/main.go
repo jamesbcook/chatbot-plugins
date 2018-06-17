@@ -21,36 +21,14 @@ const (
 )
 
 var (
-	//CMD that keybase will use to execute this plugin
-	CMD = "/strawpoll"
-	//Help is what will show in the help menu
-	Help         = "/strawpoll {id | title [options] (multi) (dup) (captcha)}"
 	areDebugging = false
 	debugWriter  *io.Writer
 )
 
-type getting string
+type activePlugin string
 
-//Getter export symbol
-var Getter getting
-
-//Sender export symbol
-var Sender getting
-
-//Debugger export Symbol
-var Debugger getting
-
-func (g getting) Debug(set bool, writer *io.Writer) {
-	areDebugging = set
-	debugWriter = writer
-}
-
-func debug(input string) {
-	if areDebugging && debugWriter != nil {
-		output := fmt.Sprintf("[DEBUG] %s\n", input)
-		(*debugWriter).Write([]byte(output))
-	}
-}
+//AP for export
+var AP activePlugin
 
 type poll struct {
 	ID int `json:"id"`
@@ -64,6 +42,28 @@ type newPoll struct {
 	Multi    bool     `json:"multi"`
 	DupCheck string   `json:"dupcheck"`
 	Captcha  bool     `json:"captcha"`
+}
+
+func (a activePlugin) Debug(set bool, writer *io.Writer) {
+	areDebugging = set
+	debugWriter = writer
+}
+
+func debug(input string) {
+	if areDebugging && debugWriter != nil {
+		output := fmt.Sprintf("[DEBUG] %s\n", input)
+		(*debugWriter).Write([]byte(output))
+	}
+}
+
+//CMD that keybase will use to execute this plugin
+func (a activePlugin) CMD() string {
+	return "/strawpoll"
+}
+
+//Help is what will show in the help menu
+func (a activePlugin) Help() string {
+	return "/strawpoll {id | title [options] (multi) (dup) (captcha)}"
 }
 
 func getData(id string) (*poll, error) {
@@ -165,7 +165,7 @@ func createPoll(arguments []string) (string, error) {
 
 //Get export method that satisfies an interface in the main program.
 //This Get method will query reddit json api.
-func (g getting) Get(input string) (string, error) {
+func (a activePlugin) Get(input string) (string, error) {
 	var output string
 	arguments := strings.FieldsFunc(input, func(c rune) bool {
 		if c != '"' {
@@ -197,11 +197,11 @@ func (g getting) Get(input string) (string, error) {
 
 //Send export method that satisfies an interface in the main program.
 //This Send method will send the results to the message ID that sent the request.
-func (g getting) Send(msgID, msg string) error {
+func (a activePlugin) Send(msgID, msg string) error {
 	debug("Starting kbchat")
 	w, err := kbchat.Start("chat")
 	if err != nil {
-		return fmt.Errorf("[URL Short Error] in send request %v", err)
+		return fmt.Errorf("[Strawpoll Error] in send request %v", err)
 	}
 	debug(fmt.Sprintf("Sending this message to messageID: %s\n%s", msgID, msg))
 	if err := w.SendMessage(msgID, msg); err != nil {

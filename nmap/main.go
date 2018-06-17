@@ -21,26 +21,16 @@ const (
 )
 
 var (
-	//CMD that keybase will use to execute this plugin
-	CMD = "/nmap"
-	//Help is what will show in the help menu
-	Help         = `/nmap {info|apiIP:apiPort nmap args}`
 	areDebugging = false
 	debugWriter  *io.Writer
 )
 
-type getting string
+type activePlugin string
 
-//Getter export symbol
-var Getter getting
+//AP for export
+var AP activePlugin
 
-//Sender export symbol
-var Sender getting
-
-//Debugger export Symbol
-var Debugger getting
-
-func (g getting) Debug(set bool, writer *io.Writer) {
+func (a activePlugin) Debug(set bool, writer *io.Writer) {
 	areDebugging = set
 	debugWriter = writer
 }
@@ -52,10 +42,20 @@ func debug(input string) {
 	}
 }
 
+//CMD that keybase will use to execute this plugin
+func (a activePlugin) CMD() string {
+	return "/nmap"
+}
+
+//Help is what will show in the help menu
+func (a activePlugin) Help() string {
+	return "/nmap {info|apiIP:apiPort nmap args}"
+}
+
 //Get export method that satisfies an interface in the main program.
 //This Get method will send a request to the chatbot-extern-api server with the
 //given nmap arguments and return the results of the scan.
-func (g getting) Get(input string) (string, error) {
+func (a activePlugin) Get(input string) (string, error) {
 	debug(fmt.Sprintf("Got %s for input", input))
 	args := strings.Split(input, " ")
 	if args[0] == "info" {
@@ -102,7 +102,7 @@ func (g getting) Get(input string) (string, error) {
 
 //Send export method that satisfies an interface in the main program.
 //This Send method will send the results to the message ID that sent the request.
-func (g getting) Send(msgID, msg string) error {
+func (a activePlugin) Send(msgID, msg string) error {
 	debug("Starting kbchat")
 	w, err := kbchat.Start("chat")
 	if err != nil {
@@ -120,7 +120,7 @@ func (g getting) Send(msgID, msg string) error {
 }
 
 func saveFile(fileName string, input []byte) error {
-	return ioutil.WriteFile(fileName, input, 0400)
+	return ioutil.WriteFile(fileName, input, 0600)
 }
 
 func randomSecretKey() error {

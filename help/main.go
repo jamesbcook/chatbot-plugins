@@ -7,33 +7,23 @@ import (
 	"github.com/jamesbcook/chatbot/kbchat"
 )
 
+const (
+	header = "ChatBot v%s\n*Accepted Commands:*\n"
+)
+
 var (
-	//CMD that keybase will use to execute this plugin
-	CMD = "/help"
-	//Help is what will show in the help menu
-	Help         = "/help this message"
-	version      = "0.14.1"
+	version      = "0.15.0"
 	msg          string
 	areDebugging = false
 	debugWriter  *io.Writer
 )
 
-type getting string
+type activePlugin string
 
-//Getter export symbol
-var Getter getting
+//AP for export
+var AP activePlugin
 
-//Sender export symbol
-var Sender getting
-
-//Debugger export Symbol
-var Debugger getting
-
-const (
-	header = "ChatBot v%s\n*Accepted Commands:*\n"
-)
-
-func (g getting) Debug(set bool, writer *io.Writer) {
+func (a activePlugin) Debug(set bool, writer *io.Writer) {
 	areDebugging = set
 	debugWriter = writer
 }
@@ -45,10 +35,20 @@ func debug(input string) {
 	}
 }
 
+//CMD that keybase will use to execute this plugin
+func (a activePlugin) CMD() string {
+	return "/help"
+}
+
+//Help is what will show in the help menu
+func (a activePlugin) Help() string {
+	return "/help this message"
+}
+
 //Get export method that satisfies an interface in the main program.
 //This Get method will generate a help message if input is not empty.
 //If input is empty it will return the formated help message.
-func (g getting) Get(input string) (string, error) {
+func (a activePlugin) Get(input string) (string, error) {
 	if input != "" {
 		fmtHeader := fmt.Sprintf(header, version)
 		start := "```\n"
@@ -61,7 +61,7 @@ func (g getting) Get(input string) (string, error) {
 
 //Send export method that satisfies an interface in the main program.
 //This Send method will send the results to the message ID that sent the request.
-func (g getting) Send(msgID, msg string) error {
+func (a activePlugin) Send(msgID, msg string) error {
 	debug("Starting kbchat")
 	w, err := kbchat.Start("chat")
 	if err != nil {

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"io"
 	"time"
 )
 
@@ -10,10 +12,19 @@ const (
 )
 
 var (
-	//Name that keybase will use for background plugins
-	Name         = "ratelimit"
 	userAccounts = make(map[string]*limiter)
+	areDebugging = false
+	debugWriter  *io.Writer
 )
+
+type backgroundPlugin string
+type authenticator string
+
+//BP for export
+var BP backgroundPlugin
+
+//Auth for export
+var Auth authenticator
 
 type limiter struct {
 	brokenRuleCount uint64
@@ -21,7 +32,25 @@ type limiter struct {
 	lastContact     time.Time
 }
 
-func updateMap() {
+//Name that keybase will use for background plugins
+func (b backgroundPlugin) Name() string {
+	return "ratelimit"
+}
+
+//Debug output
+func (b backgroundPlugin) Debug(set bool, writer *io.Writer) {
+	areDebugging = set
+	debugWriter = writer
+}
+
+func debug(input string) {
+	if areDebugging && debugWriter != nil {
+		output := fmt.Sprintf("[DEBUG] %s\n", input)
+		(*debugWriter).Write([]byte(output))
+	}
+}
+
+func (a authenticator) Start() {
 	for {
 		for user, t := range userAccounts {
 			if time.Since(t.lastContact) > timeLimit {
@@ -33,7 +62,7 @@ func updateMap() {
 }
 
 //Validate the user hasn't hit their request limit
-func Validate(user string) bool {
+func (a authenticator) Validate(user string) bool {
 	if _, ok := userAccounts[user]; !ok {
 		l := &limiter{}
 		l.lastContact = time.Now()
@@ -53,10 +82,6 @@ func Validate(user string) bool {
 	}
 	userAccounts[user].lastContact = time.Now()
 	return true
-}
-
-func init() {
-	go updateMap()
 }
 
 func main() {}

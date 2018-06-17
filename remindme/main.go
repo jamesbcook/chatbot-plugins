@@ -24,26 +24,20 @@ var (
 	reminders    = []*remindBucket{}
 )
 
+type activePlugin string
+
+//AP for export
+var AP activePlugin
+
 type remindBucket struct {
 	T       time.Time
 	Sender  string
 	Message []string
 }
 
-type getting string
-
 type duration func() time.Duration
 
-//Getter export symbol
-var Getter getting
-
-//Sender export symbol
-var Sender getting
-
-//Debugger export Symbol
-var Debugger getting
-
-func (g getting) Debug(set bool, writer *io.Writer) {
+func (a activePlugin) Debug(set bool, writer *io.Writer) {
 	areDebugging = set
 	debugWriter = writer
 }
@@ -53,6 +47,16 @@ func debug(input string) {
 		output := fmt.Sprintf("[DEBUG] %s\n", input)
 		(*debugWriter).Write([]byte(output))
 	}
+}
+
+//CMD that keybase will use to execute this plugin
+func (a activePlugin) CMD() string {
+	return "/remindme"
+}
+
+//Help is what will show in the help menu
+func (a activePlugin) Help() string {
+	return "/remindme {time} {message}"
 }
 
 func minuteFunc() time.Duration {
@@ -91,7 +95,7 @@ func getReminder() {
 
 //Get export method that satisfies an interface in the main program.
 //This Get method will query reddit json api.
-func (g getting) Get(input string) (string, error) {
+func (a activePlugin) Get(input string) (string, error) {
 	debug(fmt.Sprintf("Got input %s", input))
 	args := strings.Split(input, " ")
 	if len(args) <= 2 {
@@ -114,7 +118,7 @@ func (g getting) Get(input string) (string, error) {
 
 //Send export method that satisfies an interface in the main program.
 //This Send method will send the results to the message ID that sent the request.
-func (g getting) Send(msgID, msg string) error {
+func (a activePlugin) Send(msgID, msg string) error {
 	debug(fmt.Sprintf("Got message %s from ID %s", msg, msgID))
 	args := strings.Split(msg, " ")
 	num := args[0]
@@ -146,7 +150,7 @@ func send(msgID, msg string) error {
 	debug("Starting kbchat")
 	w, err := kbchat.Start("chat")
 	if err != nil {
-		return fmt.Errorf("[URL Short Error] in send request %v", err)
+		return fmt.Errorf("[Remindme Error] in send request %v", err)
 	}
 	debug(fmt.Sprintf("Sending this message to messageID: %s\n%s", msgID, msg))
 	if err := w.SendMessage(msgID, msg); err != nil {

@@ -9,7 +9,7 @@ const (
 )
 
 func TestGet(t *testing.T) {
-	output, err := Getter.Get("15832795")
+	output, err := AP.Get("15832795")
 	if err != nil {
 		t.Fatalf("Error getting info %v", err)
 	}
@@ -19,7 +19,7 @@ func TestGet(t *testing.T) {
 }
 
 func TestGetCreate(t *testing.T) {
-	output, err := Getter.Get(`"This is my title" "something, something2, something3" "false" "normal" "true"`)
+	output, err := AP.Get(`"This is my title" "something, something2, something3" "false" "normal" "true"`)
 	if err != nil {
 		t.Fatalf("Error getting info %v", err)
 	}
@@ -29,14 +29,14 @@ func TestGetCreate(t *testing.T) {
 }
 
 func TestSend(t *testing.T) {
-	output, err := Getter.Get("15832795")
+	output, err := AP.Get("15832795")
 	if err != nil {
 		t.Fatalf("Error getting info %v", err)
 	}
 	if len(output) <= 0 {
 		t.Fatalf("Error in output no length %v", output)
 	}
-	if err := Sender.Send(chatID, output); err != nil {
+	if err := AP.Send(chatID, output); err != nil {
 		t.Fatalf("Error sending command to keybase %v", err)
 	}
 }

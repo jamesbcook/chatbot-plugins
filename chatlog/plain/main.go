@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"time"
@@ -9,27 +10,45 @@ import (
 	"github.com/jamesbcook/chatbot-plugins/chatlog"
 )
 
-var (
-	//Name that keybase will use for background plugins
-	Name = "log"
-)
-
-type getting string
+type logging string
+type backgroundPlugin string
 
 //Logger export symbol
-var Logger getting
+var Logger logging
+
+//BP for export
+var BP backgroundPlugin
 
 var (
-	err error
-	l   = &logger{}
+	l            = &logger{}
+	areDebugging = false
+	debugWriter  *io.Writer
 )
 
 type logger struct {
 	f *os.File
 }
 
+//Name that keybase will use for background plugins
+func (b backgroundPlugin) Name() string {
+	return "log"
+}
+
+//Debug output
+func (b backgroundPlugin) Debug(set bool, writer *io.Writer) {
+	areDebugging = set
+	debugWriter = writer
+}
+
+func debug(input string) {
+	if areDebugging && debugWriter != nil {
+		output := fmt.Sprintf("[DEBUG] %s\n", input)
+		(*debugWriter).Write([]byte(output))
+	}
+}
+
 //Write data to a log file.
-func (g getting) Write(p []byte) (int, error) {
+func (lo logging) Write(p []byte) (int, error) {
 	return l.write(p)
 }
 
@@ -51,6 +70,7 @@ func (l *logger) write(p []byte) (int, error) {
 }
 
 func init() {
+	var err error
 	l, err = start()
 	if err != nil {
 		log.Fatal(err)

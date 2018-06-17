@@ -18,7 +18,7 @@ func init() {
 }
 
 func TestGiphy(t *testing.T) {
-	res, err := Getter.Get("Hackers")
+	res, err := AP.Get("Hackers")
 	if err != nil {
 		t.Fatalf("Error getting gif from Giphy %v", err)
 	}
@@ -34,14 +34,14 @@ func TestGiphy(t *testing.T) {
 }
 
 func TestSend(t *testing.T) {
-	res, err := Sender.Get("Hackers")
+	res, err := AP.Get("Hackers")
 	if err != nil {
 		t.Fatalf("Error getting gif from Giphy %v", err)
 	}
 	if len(res) <= 0 {
 		t.Fatalf("Results of giphy results is 0 or less")
 	}
-	if err := Sender.Send(chatID, res); err != nil {
+	if err := AP.Send(chatID, res); err != nil {
 		t.Fatalf("Error sending attachment %v", err)
 	}
 }

@@ -21,7 +21,7 @@ func TestURL(t *testing.T) {
 
 func TestGet(t *testing.T) {
 	testURL := "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png"
-	res, err := Getter.Get(testURL)
+	res, err := AP.Get(testURL)
 	if err != nil {
 		t.Fatalf("Error performing get request %v", err)
 	}
@@ -37,14 +37,14 @@ func TestGet(t *testing.T) {
 }
 func TestSend(t *testing.T) {
 	testURL := "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png"
-	res, err := Getter.Get(testURL)
+	res, err := AP.Get(testURL)
 	if err != nil {
 		t.Fatalf("Error performing get request %v", err)
 	}
 	if len(res) <= 0 {
 		t.Fatalf("Results of direct results is 0 or less")
 	}
-	if err := Sender.Send(chatID, res); err != nil {
+	if err := AP.Send(chatID, res); err != nil {
 		t.Fatalf("Error sending attachment %v", err)
 	}
 }

@@ -18,27 +18,17 @@ const (
 	priceURL   = "https://api.coinmarketcap.com/v2/ticker/%d/?convert=BTC"
 )
 
+type activePlugin string
+
+//AP for export
+var AP activePlugin
+
 var (
-	//CMD that keybase will use to execute this plugin
-	CMD = "/crypto"
-	//Help is what will show in the help menu
-	Help         = "/crypto {cryptocurrency}"
 	areDebugging = false
 	debugWriter  *io.Writer
 	nameMap      = make(map[string]int)
 	symbolMap    = make(map[string]int)
 )
-
-type getting string
-
-//Getter export symbol
-var Getter getting
-
-//Sender export symbol
-var Sender getting
-
-//Debugger export Symbol
-var Debugger getting
 
 //Listing results
 type listing struct {
@@ -92,7 +82,7 @@ type tickerSpecific struct {
 	} `json:"metadata"`
 }
 
-func (g getting) Debug(set bool, writer *io.Writer) {
+func (a activePlugin) Debug(set bool, writer *io.Writer) {
 	areDebugging = set
 	debugWriter = writer
 }
@@ -102,6 +92,16 @@ func debug(input string) {
 		output := fmt.Sprintf("[DEBUG] %s\n", input)
 		(*debugWriter).Write([]byte(output))
 	}
+}
+
+//CMD that keybase will use to execute this plugin
+func (a activePlugin) CMD() string {
+	return "/crypto"
+}
+
+//Help is what will show in the help menu
+func (a activePlugin) Help() string {
+	return "/crypto {cryptocurrency}"
 }
 
 func updateListing() {
@@ -148,7 +148,7 @@ func updateListing() {
 
 //Get export method that satisfies an interface in the main program.
 //This Get method will query the coinmarketcap api.
-func (g getting) Get(input string) (string, error) {
+func (a activePlugin) Get(input string) (string, error) {
 	debug(fmt.Sprintf("Got Input: %s", input))
 	var id int
 	lowerInput := strings.ToLower(input)
@@ -198,7 +198,7 @@ func (g getting) Get(input string) (string, error) {
 
 //Send export method that satisfies an interface in the main program.
 //This Send method will send the results to the message ID that sent the request.
-func (g getting) Send(msgID, msg string) error {
+func (a activePlugin) Send(msgID, msg string) error {
 	debug("Starting kbchat")
 	w, err := kbchat.Start("chat")
 	if err != nil {

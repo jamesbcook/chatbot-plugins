@@ -15,42 +15,21 @@ import (
 	"golang.org/x/crypto/sha3"
 )
 
-type getting string
-
-//Getter export symbol
-var Getter getting
-
-//Sender export symbol
-var Sender getting
-
-//Debugger export Symbol
-var Debugger getting
-
-type chromeData struct {
-	resolution     string
-	timeout        int
-	path           string
-	userAgent      string
-	screenshotPath string
-}
-
-var (
-	//CMD that keybase will use to execute this plugin
-	CMD = "/screenshot"
-	//Help is what will show in the help menu
-	Help         = "/screenshot {url}"
-	areDebugging = false
-	debugWriter  *io.Writer
-)
-
 const (
 	resolution = "1200,800"
 	userAgent  = "Keybase Chatbot"
 )
 
+type activePlugin string
+
+//AP for export
+var AP activePlugin
+
 var (
-	chrome = &chromeData{}
-	paths  = []string{
+	areDebugging = false
+	debugWriter  *io.Writer
+	chrome       = &chromeData{}
+	paths        = []string{
 		"/usr/bin/chromium",
 		"/usr/bin/chromium-browser",
 		"/usr/bin/google-chrome-stable",
@@ -62,16 +41,34 @@ var (
 	}
 )
 
-func (g getting) Debug(set bool, writer *io.Writer) {
+type chromeData struct {
+	resolution     string
+	timeout        int
+	path           string
+	userAgent      string
+	screenshotPath string
+}
+
+func (a activePlugin) Debug(set bool, writer *io.Writer) {
 	areDebugging = set
 	debugWriter = writer
 }
 
 func debug(input string) {
-	if areDebugging {
+	if areDebugging && debugWriter != nil {
 		output := fmt.Sprintf("[DEBUG] %s\n", input)
 		(*debugWriter).Write([]byte(output))
 	}
+}
+
+//CMD that keybase will use to execute this plugin
+func (a activePlugin) CMD() string {
+	return "/screenshot"
+}
+
+//Help is what will show in the help menu
+func (a activePlugin) Help() string {
+	return "/screenshot {url}"
 }
 
 func shaFileName(fileName string) string {
@@ -95,7 +92,7 @@ func (c *chromeData) locateChrome() {
 //Get export method that satisfies an interface in the main program.
 //This Get method will take a screen shot of the url using headless chrome
 //and return the file path.
-func (g getting) Get(query string) (string, error) {
+func (a activePlugin) Get(query string) (string, error) {
 	tmpfn := filepath.Join("/tmp", shaFileName(query))
 	basicArguments := []string{
 		"--headless", "--disable-gpu", "--hide-scrollbars",
@@ -123,7 +120,7 @@ func (g getting) Get(query string) (string, error) {
 //Send export method that satisfies an interface in the main program.
 //This Send method will upload the results to the message ID that sent the request,
 //once the file is uploaded it will delete the file.
-func (g getting) Send(msgID, msg string) error {
+func (a activePlugin) Send(msgID, msg string) error {
 	debug("Starting kbchat")
 	w, err := kbchat.Start("chat")
 	if err != nil {

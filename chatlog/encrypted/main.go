@@ -15,24 +15,40 @@ import (
 	"golang.org/x/crypto/scrypt"
 )
 
-var (
-	//Name of plugin module
-	Name = "log"
-)
-
 type logging string
+type backgroundPlugin string
 
 //Logger variable to be used as an export
 var Logger logging
 
 var (
-	err    error
-	l      = &logger{}
-	aesgcm cipher.AEAD
+	err          error
+	l            = &logger{}
+	aesgcm       cipher.AEAD
+	areDebugging = false
+	debugWriter  *io.Writer
 )
 
 type logger struct {
 	f *os.File
+}
+
+//Name that keybase will use for background plugins
+func (b backgroundPlugin) Name() string {
+	return "log"
+}
+
+//Debug output
+func (b backgroundPlugin) Debug(set bool, writer *io.Writer) {
+	areDebugging = set
+	debugWriter = writer
+}
+
+func debug(input string) {
+	if areDebugging && debugWriter != nil {
+		output := fmt.Sprintf("[DEBUG] %s\n", input)
+		(*debugWriter).Write([]byte(output))
+	}
 }
 
 //Write encrypted data to a log file. Random 12 byte nonce is used, and put

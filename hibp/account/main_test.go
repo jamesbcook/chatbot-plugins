@@ -28,7 +28,7 @@ func TestAllPastesForAccount(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	res, err := Getter.Get("ajitvpai@gmail.com")
+	res, err := AP.Get("ajitvpai@gmail.com")
 	if err != nil {
 		t.Fatalf("Error in get request %v", err)
 	}
@@ -39,14 +39,14 @@ func TestGet(t *testing.T) {
 
 func TestSend(t *testing.T) {
 	time.Sleep(2 * time.Second) //was getting limited
-	res, err := Getter.Get("ajitvpai@gmail.com")
+	res, err := AP.Get("ajitvpai@gmail.com")
 	if err != nil {
 		t.Fatalf("Error in get request %v", err)
 	}
 	if len(res) <= 0 {
 		t.Fatalf("Results are less than or equal to 0")
 	}
-	if err := Sender.Send(chatID, res); err != nil {
+	if err := AP.Send(chatID, res); err != nil {
 		t.Fatalf("Error sending message to keybase %v", err)
 	}
 }
