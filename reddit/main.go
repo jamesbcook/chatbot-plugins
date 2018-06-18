@@ -12,7 +12,7 @@ import (
 
 const (
 	userAgent = "KeyBase Chatbot"
-	urlFMT    = "https://www.reddit.com/r/%s/top/.json"
+	urlFMT    = "https://www.reddit.com/r/%s/hot/.json"
 )
 
 var (
@@ -27,24 +27,16 @@ var AP activePlugin
 
 //Kind of response from reddit
 type Kind struct {
-	Data `json:"data"`
-}
-
-//Data contains an array of children
-type Data struct {
-	Childrens []Children `json:"children"`
-}
-
-//Children contains data
-type Children struct {
-	Data InnerData `json:"data"`
-}
-
-//InnerData contains info about a post
-type InnerData struct {
-	Author    string `json:"author"`
-	Title     string `json:"title"`
-	Permalink string `json:"permalink"`
+	Data struct {
+		Children []struct {
+			Data struct {
+				Author        string  `json:"author"`
+				Title         string  `json:"title"`
+				Permalink     string  `json:"permalink"`
+				Distinguished *string `json:"distinguished"`
+			} `json:"data"`
+		} `json:"children"`
+	} `json:"data"`
 }
 
 func (a activePlugin) Debug(set bool, writer *io.Writer) {
@@ -98,14 +90,20 @@ func (a activePlugin) Get(input string) (string, error) {
 		return "", fmt.Errorf("[Reddit Error] unmarshalling response %v", err)
 	}
 	var numOfLinks int
-	if len(k.Childrens) <= 10 {
-		numOfLinks = len(k.Childrens)
+	if len(k.Data.Children) <= 10 {
+		numOfLinks = len(k.Data.Children)
 	} else {
 		numOfLinks = 10
 	}
 	msg := "Top Posts\n"
-	for x := 0; x < numOfLinks; x++ {
-		msg += fmt.Sprintf("Title: %-16s\n", k.Childrens[x].Data.Title)
+	x := 0
+	for _, child := range k.Data.Children {
+		if x < numOfLinks && child.Data.Distinguished == nil {
+			msg += fmt.Sprintf("Title: %-16s\n", child.Data.Title)
+			x++
+		} else if x == 10 {
+			break
+		}
 	}
 	debug(fmt.Sprintf("Message sending to user\n%s", msg))
 	return msg, nil

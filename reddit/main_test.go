@@ -29,4 +29,5 @@ func TestGet(t *testing.T) {
 	if len(output) <= 0 {
 		t.Fatalf("Error in output no length %v", output)
 	}
+	t.Log(output)
 }
