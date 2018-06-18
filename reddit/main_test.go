@@ -30,4 +30,8 @@ func TestGet(t *testing.T) {
 		t.Fatalf("Error in output no length %v", output)
 	}
 	t.Log(output)
+	_, err = AP.Get("asdfasdfadsf;aldska;lj")
+	if err == nil {
+		t.Fatalf("Error shouldn't be nil")
+	}
 }

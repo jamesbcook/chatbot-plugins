@@ -12,7 +12,8 @@ import (
 
 const (
 	userAgent = "KeyBase Chatbot"
-	urlFMT    = "https://www.reddit.com/r/%s/hot/.json"
+	baseURL   = "https://reddit.com/r/"
+	jsonURL   = baseURL + "%s/hot/.json"
 )
 
 var (
@@ -64,7 +65,7 @@ func (a activePlugin) Help() string {
 //Get export method that satisfies an interface in the main program.
 //This Get method will query reddit json api.
 func (a activePlugin) Get(input string) (string, error) {
-	url := fmt.Sprintf(urlFMT, input)
+	url := fmt.Sprintf(jsonURL, input)
 	client := &http.Client{}
 	debug(fmt.Sprintf("Creating GET request to %s", url))
 	req, err := http.NewRequest("GET", url, nil)
@@ -95,7 +96,10 @@ func (a activePlugin) Get(input string) (string, error) {
 	} else {
 		numOfLinks = 10
 	}
-	msg := "Top Posts\n"
+	if len(k.Data.Children) == 0 {
+		return "", fmt.Errorf("Subreddit %s not found", input)
+	}
+	msg := fmt.Sprintf("Top Posts for %s%s\n", baseURL, input)
 	x := 0
 	for _, child := range k.Data.Children {
 		if x < numOfLinks && child.Data.Distinguished == nil {
