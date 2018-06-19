@@ -4,6 +4,8 @@ import (
 	"log"
 	"os"
 	"testing"
+
+	"github.com/jamesbcook/chatbot/kbchat"
 )
 
 const (
@@ -34,6 +36,8 @@ func TestGiphy(t *testing.T) {
 }
 
 func TestSend(t *testing.T) {
+	sub := kbchat.SubscriptionMessage{}
+	sub.Conversation.ID = chatID
 	res, err := AP.Get("Hackers")
 	if err != nil {
 		t.Fatalf("Error getting gif from Giphy %v", err)
@@ -41,7 +45,7 @@ func TestSend(t *testing.T) {
 	if len(res) <= 0 {
 		t.Fatalf("Results of giphy results is 0 or less")
 	}
-	if err := AP.Send(chatID, res); err != nil {
+	if err := AP.Send(sub, res); err != nil {
 		t.Fatalf("Error sending attachment %v", err)
 	}
 }

@@ -2,6 +2,8 @@ package main
 
 import (
 	"testing"
+
+	"github.com/jamesbcook/chatbot/kbchat"
 )
 
 const (
@@ -37,6 +39,8 @@ func TestGet(t *testing.T) {
 }
 
 func TestSend(t *testing.T) {
+	sub := kbchat.SubscriptionMessage{}
+	sub.Conversation.ID = chatID
 	res, err := AP.Get("hunter2")
 	if err != nil {
 		t.Fatalf("Error in get request %v", err)
@@ -44,7 +48,7 @@ func TestSend(t *testing.T) {
 	if len(res) <= 0 {
 		t.Fatalf("Results are less than or equal to 0")
 	}
-	if err := AP.Send(chatID, res); err != nil {
+	if err := AP.Send(sub, res); err != nil {
 		t.Fatalf("Error sending message to keybase %v", err)
 	}
 }

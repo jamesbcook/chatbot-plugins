@@ -1,6 +1,10 @@
 package main
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/jamesbcook/chatbot/kbchat"
+)
 
 const (
 	chatID = ""
@@ -17,6 +21,8 @@ func TestGet(t *testing.T) {
 }
 
 func TestSend(t *testing.T) {
+	sub := kbchat.SubscriptionMessage{}
+	sub.Conversation.ID = chatID
 	_, err := AP.Get("Helper\nTesting")
 	if err != nil {
 		t.Fatalf("Error in get request %v", err)
@@ -28,7 +34,7 @@ func TestSend(t *testing.T) {
 	if res == "" {
 		t.Fatalf("Results should not be empty the second time")
 	}
-	if err := AP.Send(chatID, res); err != nil {
+	if err := AP.Send(sub, res); err != nil {
 		t.Fatalf("Error sending to keybase %v", err)
 	}
 }

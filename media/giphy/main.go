@@ -99,7 +99,7 @@ func (a activePlugin) Get(input string) (string, error) {
 //Send export method that satisfies an interface in the main program.
 //This Send method will upload the results to the message ID that sent the request,
 //once the file is uploaded it will delete the file.
-func (a activePlugin) Send(msgID, msg string) error {
+func (a activePlugin) Send(subscription kbchat.SubscriptionMessage, msg string) error {
 	debug("Starting kbchat")
 	w, err := kbchat.Start("chat")
 	if err != nil {
@@ -109,7 +109,7 @@ func (a activePlugin) Send(msgID, msg string) error {
 	debug("Checking if file exists")
 	if _, err = os.Stat(msg); os.IsNotExist(err) {
 		debug("File didn't exist")
-		if err := w.SendMessage(msgID, msg); err != nil {
+		if err := w.SendMessage(subscription.Conversation.ID, msg); err != nil {
 			if err := w.Proc.Kill(); err != nil {
 				return err
 			}
@@ -117,8 +117,8 @@ func (a activePlugin) Send(msgID, msg string) error {
 		}
 		return w.Proc.Kill()
 	}
-	debug(fmt.Sprintf("Uploading %s to msgID: %s", msg, msgID))
-	if err := w.Upload(msgID, msg, "Chatbot-Giphy"); err != nil {
+	debug(fmt.Sprintf("Uploading %s to msgID: %s", msg, subscription.Conversation.ID))
+	if err := w.Upload(subscription.Conversation.ID, msg, "Chatbot-Giphy"); err != nil {
 		if err := w.Proc.Kill(); err != nil {
 			return err
 		}

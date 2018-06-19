@@ -122,14 +122,14 @@ func formatOutput(breaches []breachedAccount, pastes []pasteAccount) string {
 
 //Send export method that satisfies an interface in the main program.
 //This Send method will send the results to the message ID that sent the request.
-func (a activePlugin) Send(msgID, msg string) error {
+func (a activePlugin) Send(subscription kbchat.SubscriptionMessage, msg string) error {
 	debug("Starting kbchat")
 	w, err := kbchat.Start("chat")
 	if err != nil {
 		return fmt.Errorf("[HIBP-Account Error] sending message %v", err)
 	}
-	debug(fmt.Sprintf("Sending this message to messageID: %s\n%s", msgID, msg))
-	if err := w.SendMessage(msgID, msg); err != nil {
+	debug(fmt.Sprintf("Sending this message to messageID: %s\n%s", subscription.Conversation.ID, msg))
+	if err := w.SendMessage(subscription.Conversation.ID, msg); err != nil {
 		if err := w.Proc.Kill(); err != nil {
 			return err
 		}

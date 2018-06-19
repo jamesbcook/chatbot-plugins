@@ -3,6 +3,8 @@ package main
 import (
 	"os"
 	"testing"
+
+	"github.com/jamesbcook/chatbot/kbchat"
 )
 
 const (
@@ -36,6 +38,8 @@ func TestGet(t *testing.T) {
 	}
 }
 func TestSend(t *testing.T) {
+	sub := kbchat.SubscriptionMessage{}
+	sub.Conversation.ID = chatID
 	testURL := "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png"
 	res, err := AP.Get(testURL)
 	if err != nil {
@@ -44,7 +48,7 @@ func TestSend(t *testing.T) {
 	if len(res) <= 0 {
 		t.Fatalf("Results of direct results is 0 or less")
 	}
-	if err := AP.Send(chatID, res); err != nil {
+	if err := AP.Send(sub, res); err != nil {
 		t.Fatalf("Error sending attachment %v", err)
 	}
 }

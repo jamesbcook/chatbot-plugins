@@ -9,6 +9,7 @@ import (
 
 	"github.com/jamesbcook/chatbot-external-api/api"
 	"github.com/jamesbcook/chatbot-external-api/network"
+	"github.com/jamesbcook/chatbot/kbchat"
 )
 
 var (
@@ -87,6 +88,8 @@ func TestGet(t *testing.T) {
 }
 
 func TestSend(t *testing.T) {
+	sub := kbchat.SubscriptionMessage{}
+	sub.Conversation.ID = chatID
 	go setuplistener()
 	server := fmt.Sprintf("localhost:%d", port)
 	args := fmt.Sprintf("-p %d localhost", port)
@@ -99,7 +102,7 @@ func TestSend(t *testing.T) {
 	if len(results) == 0 {
 		t.Errorf("Length of results is 0, this shouldn't be")
 	}
-	if err := AP.Send(chatID, results); err != nil {
+	if err := AP.Send(sub, results); err != nil {
 		t.Fatalf("Error sending command to keybase %v", err)
 	}
 }

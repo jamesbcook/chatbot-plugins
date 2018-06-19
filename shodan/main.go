@@ -92,14 +92,14 @@ func (a activePlugin) Get(input string) (string, error) {
 
 //Send export method that satisfies an interface in the main program.
 //This Send method will respond with the results to the message ID that sent the request.
-func (a activePlugin) Send(msgID, msg string) error {
+func (a activePlugin) Send(subscription kbchat.SubscriptionMessage, msg string) error {
 	debug("Starting kbchat")
 	w, err := kbchat.Start("chat")
 	if err != nil {
 		return fmt.Errorf("[Shodan Error] in send request %v", err)
 	}
-	debug(fmt.Sprintf("Sending %s to %s", msg, msgID))
-	if err := w.SendMessage(msgID, msg); err != nil {
+	debug(fmt.Sprintf("Sending %s to %s", msg, subscription.Conversation.ID))
+	if err := w.SendMessage(subscription.Conversation.ID, msg); err != nil {
 		if err := w.Proc.Kill(); err != nil {
 			return err
 		}

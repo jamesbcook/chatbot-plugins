@@ -12,10 +12,6 @@ import (
 )
 
 var (
-	//CMD that keybase will use to execute this plugin
-	CMD = "/remindme"
-	//Help is what will show in the help menu
-	Help         = `/remindme {time} {message}`
 	areDebugging = false
 	debugWriter  *io.Writer
 	minute       = regexp.MustCompile("minute|minutes")
@@ -118,8 +114,8 @@ func (a activePlugin) Get(input string) (string, error) {
 
 //Send export method that satisfies an interface in the main program.
 //This Send method will send the results to the message ID that sent the request.
-func (a activePlugin) Send(msgID, msg string) error {
-	debug(fmt.Sprintf("Got message %s from ID %s", msg, msgID))
+func (a activePlugin) Send(subscription kbchat.SubscriptionMessage, msg string) error {
+	debug(fmt.Sprintf("Got message %s from ID %s", msg, subscription.Conversation.ID))
 	args := strings.Split(msg, " ")
 	num := args[0]
 	duration := args[1]
@@ -138,12 +134,12 @@ func (a activePlugin) Send(msgID, msg string) error {
 		reminder = setRemindMe(numInt, message, dayFunc)
 	}
 	debug(fmt.Sprintf("Adding %v to reminders", reminder))
-	reminder.Sender = msgID
+	reminder.Sender = subscription.Conversation.ID
 	reminders = append(reminders, reminder)
 	debug(fmt.Sprintf("Number of reminders now %d", len(reminders)))
 	t := fmt.Sprintf("Your reminder is set for %s", reminder.T.Format("2006 Jan 2 15:04:05 UTC"))
 	debug(fmt.Sprintf("Sending %s to user", t))
-	return send(msgID, t)
+	return send(subscription.Conversation.ID, t)
 }
 
 func send(msgID, msg string) error {

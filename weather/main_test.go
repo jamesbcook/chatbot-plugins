@@ -3,6 +3,8 @@ package main
 import (
 	"os"
 	"testing"
+
+	"github.com/jamesbcook/chatbot/kbchat"
 )
 
 const (
@@ -10,6 +12,8 @@ const (
 )
 
 func TestSend(t *testing.T) {
+	sub := kbchat.SubscriptionMessage{}
+	sub.Conversation.ID = chatID
 	err := os.Setenv("CHATBOT_WEATHER", "")
 	if err != nil {
 		t.Fatalf("Error setting env var %v", err)
@@ -21,7 +25,7 @@ func TestSend(t *testing.T) {
 	if len(output) <= 0 {
 		t.Fatalf("Error in output no length %v", output)
 	}
-	if err := AP.Send(chatID, output); err != nil {
+	if err := AP.Send(sub, output); err != nil {
 		t.Fatalf("Error sending command to keybase %v", err)
 	}
 }
