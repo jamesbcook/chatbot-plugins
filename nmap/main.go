@@ -1,13 +1,10 @@
 package main
 
 import (
-	"encoding/hex"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"math/rand"
-	"os"
 	"strings"
 
 	"github.com/jamesbcook/chatbot-external-api/api"
@@ -119,75 +116,39 @@ func (a activePlugin) Send(subscription kbchat.SubscriptionMessage, msg string) 
 	return w.Proc.Kill()
 }
 
-func saveFile(fileName string, input []byte) error {
-	return ioutil.WriteFile(fileName, input, 0600)
-}
-
 func randomSecretKey() error {
 	debug("Generating random secret key pair")
 	if err := network.GenerateSecretKeyPair(); err != nil {
 		return err
 	}
-	skFile, err := filesystem.GetPrivateKeyFile(app)
+	fs, err := filesystem.New(app)
 	if err != nil {
 		return err
 	}
-	pkFile, err := filesystem.GetPublicKeyFile(app)
-	if err != nil {
+	if err := fs.SaveKeyToFile([]byte(network.GetIdentityKey()), fs.GetPublicKeyFile()); err != nil {
 		return err
 	}
-	if err := saveFile(skFile, []byte(network.GetSecretKey())); err != nil {
-		return err
-	}
-	if err := saveFile(pkFile, []byte(network.GetIdentityKey())); err != nil {
+	if err := fs.SaveKeyToFile([]byte(network.GetSecretKey()), fs.GetPrivateKeyFile()); err != nil {
 		return err
 	}
 	return nil
 }
 
-func loadFile(input string) ([]byte, error) {
-	f, err := os.Open(input)
-	if err != nil {
-		return nil, err
-	}
-	output, err := ioutil.ReadAll(f)
-	if err != nil {
-		return nil, err
-	}
-	return decodeHex(output)
-}
-
-func decodeHex(input []byte) ([]byte, error) {
-	output := make([]byte, hex.DecodedLen(len(input)))
-	_, err := hex.Decode(output, input)
-	if err != nil {
-		return nil, err
-	}
-	return output, err
-}
-
 func init() {
-	skFile, err := filesystem.GetPrivateKeyFile(app)
+	fs, err := filesystem.New(app)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	pkFile, err := filesystem.GetPublicKeyFile(app)
+	priv, err := fs.LoadPrivateKeyFile()
 	if err != nil {
-		log.Println(err)
-		return
-	}
-	priv, err := loadFile(skFile)
-	if err != nil {
-		log.Println(err)
 		if err := randomSecretKey(); err != nil {
 			log.Println(err)
 		}
 		return
 	}
-	pub, err := loadFile(pkFile)
+	pub, err := fs.LoadPublicKeyFile()
 	if err != nil {
-		log.Println(err)
 		if err := randomSecretKey(); err != nil {
 			log.Println(err)
 		}
