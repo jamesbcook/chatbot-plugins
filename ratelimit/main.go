@@ -44,7 +44,7 @@ func (b backgroundPlugin) Debug(set bool, writer *io.Writer) {
 }
 
 func debug(input string) {
-	if areDebugging && debugWriter != nil {
+	if areDebugging && *debugWriter != nil {
 		output := fmt.Sprintf("[DEBUG] %s\n", input)
 		(*debugWriter).Write([]byte(output))
 	}
