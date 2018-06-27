@@ -52,7 +52,7 @@ func TestSendInternal(t *testing.T) {
 	if len(output) <= 0 {
 		t.Fatalf("Error in output no length %v", output)
 	}
-	if err := send(chatChannel, output); err != nil {
+	if err := send(dm, chatChannel, output); err != nil {
 		t.Fatalf("Error sending command to keybase %v", err)
 	}
 }

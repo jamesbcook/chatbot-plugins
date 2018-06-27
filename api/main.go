@@ -123,21 +123,35 @@ func (a activePlugin) Send(subscription kbchat.SubscriptionMessage, msg string) 
 	return w.Proc.Kill()
 }
 
-func send(channelName, msg string) error {
+func team(c kbchat.API, args ...string) error {
+	name := args[0]
+	channel := args[1]
+	msg := args[2]
+	debug(fmt.Sprintf("Sending this message to team %s in channel: %s\n%s", name, channel, msg))
+	return c.SendMessageByTeamName(name, msg, &channel)
+}
+
+func dm(c kbchat.API, args ...string) error {
+	name := args[0]
+	msg := args[1]
+	debug(fmt.Sprintf("Sending this message to channel: %s\n%s", name, msg))
+	return c.SendMessageByTlfName(name, msg)
+}
+
+func send(f func(c kbchat.API, args ...string) error, args ...string) error {
 	debug("Starting kbchat")
-	w, err := kbchat.Start("chat")
+	c, err := kbchat.Start("chat")
 	if err != nil {
 		return fmt.Errorf("[API Error] in send request %v", err)
 	}
-	debug(fmt.Sprintf("Sending this message to channel: %s\n%s", channelName, msg))
-	if err := w.SendMessageByTlfName(channelName, msg); err != nil {
-		if err := w.Proc.Kill(); err != nil {
+	if err := f(*c, args...); err != nil {
+		if err := c.Proc.Kill(); err != nil {
 			return err
 		}
 		return err
 	}
 	debug("Killing child process")
-	return w.Proc.Kill()
+	return c.Proc.Kill()
 }
 
 func validKey(theirPK []byte) bool {
@@ -162,34 +176,37 @@ func handle(session *network.Session) {
 			session.Close()
 			return
 		}
+		debug(fmt.Sprintf("Got message\n%v", msg))
 		if !validKey(session.Keys.TheirIdentityKey[:]) {
 			session.Close()
 			return
 		}
 		switch msg.ID {
-		case api.MessageID_Beacon:
-			debug("Got Beacon Message")
-			send(msg.Channel, string(msg.IO))
-			length := rand.Intn(48)
-			buf := make([]byte, length)
-			rand.Read(buf)
-			m := &api.Message{}
-			m.ID = api.MessageID_Response
-			m.IO = buf
-			debug("Sending Encrypted Response")
-			if err := session.SendEncryptedMsg(m); err != nil {
-				log.Println(err)
-				session.Close()
-				return
-			}
-		case api.MessageID_Hash:
-			debug("Got Hash Message")
-			fmt.Println("Not Implemented")
-		case api.MessageID_Nmap:
-			debug("Got Nmap Message")
-			fmt.Println("Not Implemented")
+		case api.MessageID_Beacon, api.MessageID_Nmap:
 		case api.MessageID_Done:
 			debug("Got Done Message")
+			session.Close()
+			return
+		default:
+			debug("Not a matching ID, closing session")
+			session.Close()
+			return
+		}
+		debug(fmt.Sprintf("Got %s Message", msg.ID.String()))
+		if msg.ChatType == api.ChatType_Team {
+			send(team, msg.Chat.Team, msg.Chat.Channel, string(msg.IO))
+		} else {
+			send(dm, msg.Chat.Channel, string(msg.IO))
+		}
+		length := rand.Intn(48)
+		buf := make([]byte, length)
+		rand.Read(buf)
+		m := &api.Message{}
+		m.ID = api.MessageID_Response
+		m.IO = buf
+		debug("Sending Encrypted Response")
+		if err := session.SendEncryptedMsg(m); err != nil {
+			log.Println(err)
 			session.Close()
 			return
 		}
