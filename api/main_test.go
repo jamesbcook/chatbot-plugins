@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	chatID      = ""
-	chatChannel = ""
+	chatID      = os.Getenv("CHATBOT_TEST_CHATID")
+	chatChannel = os.Getenv("CHATBOT_TEST_CHATCHANNEL")
 )
 
 func TestDebugExport(t *testing.T) {
@@ -30,6 +30,7 @@ func TestDebugInternal(t *testing.T) {
 }
 
 func TestSendExport(t *testing.T) {
+	AP.Debug(false, nil)
 	sub := kbchat.SubscriptionMessage{}
 	sub.Conversation.ID = chatID
 	output, err := AP.Get("info")
@@ -45,6 +46,7 @@ func TestSendExport(t *testing.T) {
 }
 
 func TestSendInternal(t *testing.T) {
+	AP.Debug(false, nil)
 	output, err := AP.Get("info")
 	if err != nil {
 		t.Fatalf("Error getting info %v", err)
@@ -58,6 +60,7 @@ func TestSendInternal(t *testing.T) {
 }
 
 func TestInfo(t *testing.T) {
+	AP.Debug(false, nil)
 	out, err := AP.Get("info")
 	if err != nil {
 		t.Fatal(err)
@@ -68,6 +71,7 @@ func TestInfo(t *testing.T) {
 }
 
 func TestInvalidCommand(t *testing.T) {
+	AP.Debug(false, nil)
 	_, err := AP.Get("Something")
 	if err == nil {
 		t.Fatal("This command should have failed")
@@ -75,6 +79,7 @@ func TestInvalidCommand(t *testing.T) {
 }
 
 func TestAdd(t *testing.T) {
+	AP.Debug(false, nil)
 	var c crypto.ED25519
 	if err := c.CreateKeys(); err != nil {
 		t.Fatal(err)
@@ -100,6 +105,7 @@ func TestAdd(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
+	AP.Debug(false, nil)
 	var c crypto.ED25519
 	if err := c.CreateKeys(); err != nil {
 		t.Fatal(err)

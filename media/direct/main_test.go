@@ -7,8 +7,8 @@ import (
 	"github.com/jamesbcook/chatbot/kbchat"
 )
 
-const (
-	chatID = ""
+var (
+	chatID = os.Getenv("CHATBOT_TEST_CHATID")
 )
 
 func TestURL(t *testing.T) {

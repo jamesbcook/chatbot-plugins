@@ -1,13 +1,14 @@
 package main
 
 import (
+	"os"
 	"testing"
 
 	"github.com/jamesbcook/chatbot/kbchat"
 )
 
-const (
-	chatID = ""
+var (
+	chatID = os.Getenv("CHATBOT_TEST_CHATID")
 )
 
 func TestGet(t *testing.T) {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 	"testing"
@@ -14,7 +15,7 @@ import (
 
 var (
 	port   = 40001
-	chatID = ""
+	chatID = os.Getenv("CHATBOT_TEST_CHATID")
 )
 
 func scan(args []byte) ([]byte, error) {
