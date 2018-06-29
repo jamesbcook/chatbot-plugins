@@ -11,6 +11,7 @@ const (
 )
 
 func TestSend(t *testing.T) {
+	AP.Debug(false, nil)
 	sub := kbchat.SubscriptionMessage{}
 	sub.Conversation.ID = chatID
 	output, err := AP.Get("bd2c2cf0631d881ed382817afcce2b093f4e412ffb170a719e2762f250abfea4")
@@ -26,6 +27,7 @@ func TestSend(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
+	AP.Debug(false, nil)
 	output, err := AP.Get("bd2c2cf0631d881ed382817afcce2b093f4e412ffb170a719e2762f250abfea4")
 	if err != nil {
 		t.Fatalf("Error getting info %v", err)

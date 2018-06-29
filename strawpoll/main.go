@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/jamesbcook/chatbot/kbchat"
+	"github.com/jamesbcook/print"
 )
 
 const (
@@ -21,8 +22,7 @@ const (
 )
 
 var (
-	areDebugging = false
-	debugWriter  *io.Writer
+	debugPrintf func(format string, v ...interface{})
 )
 
 type activePlugin string
@@ -45,15 +45,7 @@ type newPoll struct {
 }
 
 func (a activePlugin) Debug(set bool, writer *io.Writer) {
-	areDebugging = set
-	debugWriter = writer
-}
-
-func debug(input string) {
-	if areDebugging && *debugWriter != nil {
-		output := fmt.Sprintf("[DEBUG] %s\n", input)
-		(*debugWriter).Write([]byte(output))
-	}
+	debugPrintf = print.Debugf(set, writer)
 }
 
 //CMD that keybase will use to execute this plugin
@@ -68,7 +60,7 @@ func (a activePlugin) Help() string {
 
 func getData(id string) (*poll, error) {
 	url := fmt.Sprintf(getURL+"%s", id)
-	debug(fmt.Sprintf("Sending GET to %s", url))
+	debugPrintf("Sending GET to %s\n", url)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -84,7 +76,7 @@ func getData(id string) (*poll, error) {
 	if err != nil {
 		return nil, err
 	}
-	debug(fmt.Sprintf("Response length %d", len(body)))
+	debugPrintf("Response length %d\n", len(body))
 	p := &poll{}
 	if err := json.Unmarshal(body, p); err != nil {
 		return nil, err
@@ -97,7 +89,7 @@ func postData(np *newPoll) (*poll, error) {
 	if err != nil {
 		return nil, err
 	}
-	debug(fmt.Sprintf("Sending data %v to %s", string(enc), postURL))
+	debugPrintf("Sending data %v to %s\n", string(enc), postURL)
 	req, err := http.NewRequest("POST", postURL, bytes.NewBuffer(enc))
 	if err != nil {
 		return nil, err
@@ -114,7 +106,7 @@ func postData(np *newPoll) (*poll, error) {
 	if err != nil {
 		return nil, err
 	}
-	debug(fmt.Sprintf("Got response size of %d", len(body)))
+	debugPrintf("Got response size of %d\n", len(body))
 	p := &poll{}
 	if err := json.Unmarshal(body, p); err != nil {
 		return nil, err
@@ -157,7 +149,7 @@ func createPoll(arguments []string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	debug(fmt.Sprintf("poll results %v", p))
+	debugPrintf("poll results %v\n", p)
 	output := fmt.Sprintf("Title: %s\nURL: ", p.Title)
 	output += fmt.Sprintf(baseURL+"%d", p.ID)
 	return output, nil
@@ -191,26 +183,26 @@ func (a activePlugin) Get(input string) (string, error) {
 			return "", err
 		}
 	}
-	debug(fmt.Sprintf("Output sending to user %s", output))
+	debugPrintf("Output sending to user %s\n", output)
 	return output, nil
 }
 
 //Send export method that satisfies an interface in the main program.
 //This Send method will send the results to the message ID that sent the request.
 func (a activePlugin) Send(subscription kbchat.SubscriptionMessage, msg string) error {
-	debug("Starting kbchat")
+	debugPrintf("Starting kbchat\n")
 	w, err := kbchat.Start("chat")
 	if err != nil {
 		return fmt.Errorf("[Strawpoll Error] in send request %v", err)
 	}
-	debug(fmt.Sprintf("Sending this message to messageID: %s\n%s", subscription.Conversation.ID, msg))
+	debugPrintf("Sending this message to messageID: %s\n%s\n", subscription.Conversation.ID, msg)
 	if err := w.SendMessage(subscription.Conversation.ID, msg); err != nil {
 		if err := w.Proc.Kill(); err != nil {
 			return err
 		}
 		return err
 	}
-	debug("Killing child process")
+	debugPrintf("Killing child process\n")
 	return w.Proc.Kill()
 }
 

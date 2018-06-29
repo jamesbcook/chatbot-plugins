@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"math/rand"
 	"net"
 	"net/http"
@@ -17,13 +16,13 @@ import (
 	"github.com/jamesbcook/chatbot-external-api/api"
 	"github.com/jamesbcook/chatbot-external-api/network"
 	"github.com/jamesbcook/chatbot/kbchat"
+	"github.com/jamesbcook/print"
 )
 
 var (
-	areDebugging = false
-	debugWriter  *io.Writer
-	keys         []string
-	serv         = &server{}
+	debugPrintf func(format string, v ...interface{})
+	keys        []string
+	serv        = &server{}
 )
 
 type activePlugin string
@@ -38,15 +37,7 @@ type server struct {
 }
 
 func (a activePlugin) Debug(set bool, writer *io.Writer) {
-	areDebugging = set
-	debugWriter = writer
-}
-
-func debug(input string) {
-	if areDebugging && *debugWriter != nil {
-		output := fmt.Sprintf("[DEBUG] %s\n", input)
-		(*debugWriter).Write([]byte(output))
-	}
+	debugPrintf = print.Debugf(set, writer)
 }
 
 //CMD that keybase will use to execute this plugin
@@ -62,12 +53,12 @@ func (a activePlugin) Help() string {
 //Get export method that satisfies an interface in the main program.
 //This Get method will query reddit json api.
 func (a activePlugin) Get(input string) (string, error) {
-	debug(fmt.Sprintf("Got the input %s", input))
+	debugPrintf("Got the input %s\n", input)
 	args := strings.Split(input, " ")
 	var output string
 	switch args[0] {
 	case "info":
-		debug("Gathering server info")
+		debugPrintf("Gathering server info\n")
 		output = fmt.Sprintf("Server Info\nPublic %s:%s\n", serv.PublicIP, serv.Port)
 		output += fmt.Sprintf("Private %s:%s\n", serv.PrivateIP, serv.Port)
 		if len(keys) > 0 {
@@ -77,14 +68,14 @@ func (a activePlugin) Get(input string) (string, error) {
 			}
 		}
 	case "add":
-		debug("Adding public key")
+		debugPrintf("Adding public key\n")
 		if len(args[1]) != 64 {
 			return "", fmt.Errorf("Invalid public key")
 		}
 		output = fmt.Sprintf("Adding %s", args[1])
 		keys = append(keys, args[1])
 	case "delete":
-		debug("Deleting pubic key")
+		debugPrintf("Deleting pubic key\n")
 		if len(args[1]) != 64 {
 			return "", fmt.Errorf("Invalid public key")
 		}
@@ -97,29 +88,29 @@ func (a activePlugin) Get(input string) (string, error) {
 			}
 		}
 	default:
-		debug("A wrong command was sent")
+		debugPrintf("A wrong command was sent\n")
 		return "", fmt.Errorf("Wrong command %s", args[0])
 	}
-	debug(fmt.Sprintf("Returning output %s", output))
+	debugPrintf("Returning output %s\n", output)
 	return output, nil
 }
 
 //Send export method that satisfies an interface in the main program.
 //This Send method will send the results to the message ID that sent the request.
 func (a activePlugin) Send(subscription kbchat.SubscriptionMessage, msg string) error {
-	debug("Starting kbchat")
+	debugPrintf("Starting kbchat\n")
 	w, err := kbchat.Start("chat")
 	if err != nil {
 		return fmt.Errorf("[API Error] in send request %v", err)
 	}
-	debug(fmt.Sprintf("Sending this message to messageID: %s\n%s", subscription.Conversation.ID, msg))
+	debugPrintf("Sending this message to messageID: %s\n%s\n", subscription.Conversation.ID, msg)
 	if err := w.SendMessage(subscription.Conversation.ID, msg); err != nil {
 		if err := w.Proc.Kill(); err != nil {
 			return err
 		}
 		return err
 	}
-	debug("Killing child process")
+	debugPrintf("Killing child process\n")
 	return w.Proc.Kill()
 }
 
@@ -127,19 +118,19 @@ func team(c kbchat.API, args ...string) error {
 	name := args[0]
 	channel := args[1]
 	msg := args[2]
-	debug(fmt.Sprintf("Sending this message to team %s in channel: %s\n%s", name, channel, msg))
+	debugPrintf("Sending this message to team %s in channel: %s\n%s\n", name, channel, msg)
 	return c.SendMessageByTeamName(name, msg, &channel)
 }
 
 func dm(c kbchat.API, args ...string) error {
 	name := args[0]
 	msg := args[1]
-	debug(fmt.Sprintf("Sending this message to channel: %s\n%s", name, msg))
+	debugPrintf("Sending this message to channel: %s\n%s\n", name, msg)
 	return c.SendMessageByTlfName(name, msg)
 }
 
 func send(f func(c kbchat.API, args ...string) error, args ...string) error {
-	debug("Starting kbchat")
+	debugPrintf("Starting kbchat\n")
 	c, err := kbchat.Start("chat")
 	if err != nil {
 		return fmt.Errorf("[API Error] in send request %v", err)
@@ -150,7 +141,7 @@ func send(f func(c kbchat.API, args ...string) error, args ...string) error {
 		}
 		return err
 	}
-	debug("Killing child process")
+	debugPrintf("Killing child process\n")
 	return c.Proc.Kill()
 }
 
@@ -169,14 +160,14 @@ func validKey(theirPK []byte) bool {
 
 func handle(session *network.Session) {
 	for {
-		debug("Getting Encrypted Message")
+		debugPrintf("Getting Encrypted Message\n")
 		msg, err := session.ReceiveEncryptedMsg()
 		if err != nil {
-			log.Println(err)
+			print.Warningln(err)
 			session.Close()
 			return
 		}
-		debug(fmt.Sprintf("Got message\n%v", msg))
+		debugPrintf("Got message\n%v\n", msg)
 		if !validKey(session.Keys.TheirIdentityKey[:]) {
 			session.Close()
 			return
@@ -184,15 +175,15 @@ func handle(session *network.Session) {
 		switch msg.ID {
 		case api.MessageID_Beacon, api.MessageID_Nmap:
 		case api.MessageID_Done:
-			debug("Got Done Message")
+			debugPrintf("Got Done Message\n")
 			session.Close()
 			return
 		default:
-			debug("Not a matching ID, closing session")
+			debugPrintf("Not a matching ID, closing session\n")
 			session.Close()
 			return
 		}
-		debug(fmt.Sprintf("Got %s Message", msg.ID.String()))
+		debugPrintf("Got %s Message\n", msg.ID.String())
 		if msg.ChatType == api.ChatType_Team {
 			send(team, msg.Chat.Team, msg.Chat.Channel, string(msg.IO))
 		} else {
@@ -204,9 +195,9 @@ func handle(session *network.Session) {
 		m := &api.Message{}
 		m.ID = api.MessageID_Response
 		m.IO = buf
-		debug("Sending Encrypted Response")
+		debugPrintf("Sending Encrypted Response\n")
 		if err := session.SendEncryptedMsg(m); err != nil {
-			log.Println(err)
+			print.Warningln(err)
 			session.Close()
 			return
 		}
@@ -215,21 +206,21 @@ func handle(session *network.Session) {
 
 func startListener() {
 	host := fmt.Sprintf(":%s", serv.Port)
-	debug("starting server")
+	debugPrintf("starting server\n")
 	l, err := network.Listen("tcp", host)
 	if err != nil {
-		log.Println(err)
+		print.Warningln(err)
 		return
 	}
 	defer l.Close()
 	for {
-		debug("Waiting for connection")
+		debugPrintf("Waiting for connection\n")
 		s, err := l.Accept()
 		if err != nil {
-			log.Println(err)
+			print.Warningln(err)
 			continue
 		}
-		debug("Got connection")
+		debugPrintf("Got connection\n")
 		go handle(s)
 	}
 }
@@ -285,27 +276,29 @@ func getPrivateIP() (string, error) {
 }
 
 func init() {
+	debugPrintf = func(format string, v ...interface{}) {
+	}
 	port := os.Getenv("CHATBOT_LISTEN_PORT")
 	if port == "" {
-		log.Println("CHATBOT_LISTEN_PORT not set, using 55449")
+		print.Warningln("CHATBOT_LISTEN_PORT not set, using 55449")
 		port = "55449"
 	}
 	serv.Port = port
-	debug("Getting Public IP")
+	debugPrintf("Getting Public IP\n")
 	pub, err := getPublicIP()
 	if err != nil {
-		log.Println(err)
+		print.Warningln(err)
 		return
 	}
 	serv.PublicIP = strings.TrimSuffix(pub, "\n")
-	debug("Getting Private IP")
+	debugPrintf("Getting Private IP\n")
 	priv, err := getPrivateIP()
 	if err != nil {
-		log.Println(err)
+		print.Warningln(err)
 		return
 	}
 	serv.PrivateIP = priv
-	debug(fmt.Sprintf("Server info %v", serv))
+	debugPrintf("Server info %v\n", serv)
 	go startListener()
 }
 

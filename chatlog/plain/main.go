@@ -3,11 +3,11 @@ package main
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"time"
 
 	"github.com/jamesbcook/chatbot-plugins/chatlog"
+	"github.com/jamesbcook/print"
 )
 
 type logging string
@@ -22,7 +22,7 @@ var BP backgroundPlugin
 var (
 	l            = &logger{}
 	areDebugging = false
-	debugWriter  *io.Writer
+	debugPrintf  func(format string, v ...interface{})
 )
 
 type logger struct {
@@ -36,15 +36,7 @@ func (b backgroundPlugin) Name() string {
 
 //Debug output
 func (b backgroundPlugin) Debug(set bool, writer *io.Writer) {
-	areDebugging = set
-	debugWriter = writer
-}
-
-func debug(input string) {
-	if areDebugging && *debugWriter != nil {
-		output := fmt.Sprintf("[DEBUG] %s\n", input)
-		(*debugWriter).Write([]byte(output))
-	}
+	debugPrintf = print.Debugf(set, writer)
 }
 
 //Write data to a log file.
@@ -73,7 +65,7 @@ func init() {
 	var err error
 	l, err = start()
 	if err != nil {
-		log.Fatal(err)
+		print.Badln(err)
 	}
 }
 

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/jamesbcook/chatbot/kbchat"
+	"github.com/jamesbcook/print"
 	"golang.org/x/crypto/sha3"
 )
 
@@ -26,10 +27,9 @@ type activePlugin string
 var AP activePlugin
 
 var (
-	areDebugging = false
-	debugWriter  *io.Writer
-	chrome       = &chromeData{}
-	paths        = []string{
+	debugPrintf func(format string, v ...interface{})
+	chrome      = &chromeData{}
+	paths       = []string{
 		"/usr/bin/chromium",
 		"/usr/bin/chromium-browser",
 		"/usr/bin/google-chrome-stable",
@@ -50,15 +50,7 @@ type chromeData struct {
 }
 
 func (a activePlugin) Debug(set bool, writer *io.Writer) {
-	areDebugging = set
-	debugWriter = writer
-}
-
-func debug(input string) {
-	if areDebugging && *debugWriter != nil {
-		output := fmt.Sprintf("[DEBUG] %s\n", input)
-		(*debugWriter).Write([]byte(output))
-	}
+	debugPrintf = print.Debugf(set, writer)
 }
 
 //CMD that keybase will use to execute this plugin
@@ -103,7 +95,7 @@ func (a activePlugin) Get(query string) (string, error) {
 	basicArguments = append(basicArguments, query)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(90*time.Second))
 	defer cancel()
-	debug(fmt.Sprintf("Executing %s with arguments %v", chrome.path, basicArguments))
+	debugPrintf("Executing %s with arguments %v\n", chrome.path, basicArguments)
 	cmd := exec.CommandContext(ctx, chrome.path, basicArguments...)
 	if err := cmd.Start(); err != nil {
 		return "", fmt.Errorf("[Screenshot Error] starting the chrome command %v", err)
@@ -113,7 +105,7 @@ func (a activePlugin) Get(query string) (string, error) {
 			return "", fmt.Errorf("[Screenshot Error] Context time out")
 		}
 	}
-	debug(fmt.Sprintf("Sending filename %s to user", tmpfn))
+	debugPrintf("Sending filename %s to user\n", tmpfn)
 	return tmpfn, nil
 }
 
@@ -121,24 +113,24 @@ func (a activePlugin) Get(query string) (string, error) {
 //This Send method will upload the results to the message ID that sent the request,
 //once the file is uploaded it will delete the file.
 func (a activePlugin) Send(subscription kbchat.SubscriptionMessage, msg string) error {
-	debug("Starting kbchat")
+	debugPrintf("Starting kbchat\n")
 	w, err := kbchat.Start("chat")
 	if err != nil {
 		return fmt.Errorf("[Screenshot Error] in send request %v", err)
 	}
-	debug("Checking if file exists")
+	debugPrintf("Checking if file exists\n")
 	if _, err = os.Stat(msg); os.IsNotExist(err) {
-		debug("File didn't exist")
+		debugPrintf("File didn't exist\n")
 		if err := w.SendMessage(subscription.Conversation.ID, "No Picture Available"); err != nil {
 			return w.Proc.Kill()
 		}
 		return w.Proc.Kill()
 	}
-	debug(fmt.Sprintf("Uploading %s to msgID: %s", msg, subscription.Conversation.ID))
+	debugPrintf("Uploading %s to msgID: %s\n", msg, subscription.Conversation.ID)
 	if err := w.Upload(subscription.Conversation.ID, msg, "Chatbot-Media"); err != nil {
 		return w.Proc.Kill()
 	}
-	debug("Killing child process")
+	debugPrintf("Killing child process\n")
 	return w.Proc.Kill()
 }
 

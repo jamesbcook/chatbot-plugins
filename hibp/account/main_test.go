@@ -30,6 +30,7 @@ func TestAllPastesForAccount(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
+	AP.Debug(false, nil)
 	res, err := AP.Get("ajitvpai@gmail.com")
 	if err != nil {
 		t.Fatalf("Error in get request %v", err)
@@ -40,6 +41,7 @@ func TestGet(t *testing.T) {
 }
 
 func TestSend(t *testing.T) {
+	AP.Debug(false, nil)
 	sub := kbchat.SubscriptionMessage{}
 	sub.Conversation.ID = chatID
 	time.Sleep(2 * time.Second) //was getting limited

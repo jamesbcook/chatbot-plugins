@@ -1,9 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"time"
+
+	"github.com/jamesbcook/print"
 )
 
 const (
@@ -13,8 +14,7 @@ const (
 
 var (
 	userAccounts = make(map[string]*limiter)
-	areDebugging = false
-	debugWriter  *io.Writer
+	debugPrintf  func(format string, v ...interface{})
 )
 
 type backgroundPlugin string
@@ -39,15 +39,7 @@ func (b backgroundPlugin) Name() string {
 
 //Debug output
 func (b backgroundPlugin) Debug(set bool, writer *io.Writer) {
-	areDebugging = set
-	debugWriter = writer
-}
-
-func debug(input string) {
-	if areDebugging && *debugWriter != nil {
-		output := fmt.Sprintf("[DEBUG] %s\n", input)
-		(*debugWriter).Write([]byte(output))
-	}
+	debugPrintf = print.Debugf(set, writer)
 }
 
 func (a authenticator) Start() {

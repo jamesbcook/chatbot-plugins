@@ -11,6 +11,7 @@ const (
 )
 
 func TestMinute(t *testing.T) {
+	AP.Debug(false, nil)
 	sub := kbchat.SubscriptionMessage{}
 	sub.Conversation.ID = chatID
 	output, err := AP.Get(`1 minute "something I want to know about"`)
@@ -30,6 +31,7 @@ func TestMinute(t *testing.T) {
 }
 
 func TestHour(t *testing.T) {
+	AP.Debug(false, nil)
 	sub := kbchat.SubscriptionMessage{}
 	sub.Conversation.ID = chatID
 	output, err := AP.Get(`1 hour "something I want to know about2"`)
@@ -42,6 +44,7 @@ func TestHour(t *testing.T) {
 }
 
 func TestDay(t *testing.T) {
+	AP.Debug(false, nil)
 	sub := kbchat.SubscriptionMessage{}
 	sub.Conversation.ID = chatID
 	output, err := AP.Get(`4 days "something I want to know about4"`)

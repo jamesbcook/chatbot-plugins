@@ -1,7 +1,6 @@
 package main
 
 import (
-	"os"
 	"testing"
 
 	"github.com/jamesbcook/chatbot/kbchat"
@@ -12,12 +11,9 @@ const (
 )
 
 func TestSend(t *testing.T) {
+	AP.Debug(false, nil)
 	sub := kbchat.SubscriptionMessage{}
 	sub.Conversation.ID = chatID
-	err := os.Setenv("CHATBOT_WEATHER", "")
-	if err != nil {
-		t.Fatalf("Error setting env var %v", err)
-	}
 	output, err := AP.Get("phoenix")
 	if err != nil {
 		t.Fatalf("Error getting info %v", err)
@@ -31,10 +27,7 @@ func TestSend(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	err := os.Setenv("CHATBOT_WEATHER", "")
-	if err != nil {
-		t.Fatalf("Error setting env var %v", err)
-	}
+	AP.Debug(false, nil)
 	output, err := AP.Get("phoenix")
 	if err != nil {
 		t.Fatalf("Error getting info %v", err)

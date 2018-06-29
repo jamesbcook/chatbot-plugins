@@ -1,7 +1,6 @@
 package main
 
 import (
-	"os"
 	"testing"
 	"time"
 )
@@ -12,11 +11,8 @@ func TestStart(t *testing.T) {
 }
 
 func TestValidate(t *testing.T) {
-	expected := ""
+	expected := "chatbot2"
 	notExpected := "asdjafs;dflkjafsd;lkjf"
-	if err := os.Setenv("CHATBOT_TEAM", ""); err != nil {
-		t.Fatalf("Error getting env var %v", err)
-	}
 	go Auth.Start()
 	time.Sleep(2 * time.Second)
 	if !Auth.Validate(expected) {

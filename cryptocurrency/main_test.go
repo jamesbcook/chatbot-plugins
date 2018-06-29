@@ -29,6 +29,7 @@ func TestDebug(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
+	AP.Debug(false, nil)
 	time.Sleep(2 * time.Second)
 	res, err := AP.Get("bitcoin")
 	if err != nil {
@@ -41,6 +42,7 @@ func TestGet(t *testing.T) {
 }
 
 func TestSend(t *testing.T) {
+	AP.Debug(false, nil)
 	sub := kbchat.SubscriptionMessage{}
 	sub.Conversation.ID = chatID
 	time.Sleep(2 * time.Second)

@@ -10,6 +10,7 @@ import (
 	"os"
 
 	"github.com/jamesbcook/chatbot/kbchat"
+	"github.com/jamesbcook/print"
 )
 
 const (
@@ -19,8 +20,7 @@ const (
 )
 
 var (
-	areDebugging = false
-	debugWriter  *io.Writer
+	debugPrintf func(format string, v ...interface{})
 )
 
 type activePlugin string
@@ -57,15 +57,7 @@ type Wind struct {
 }
 
 func (a activePlugin) Debug(set bool, writer *io.Writer) {
-	areDebugging = set
-	debugWriter = writer
-}
-
-func debug(input string) {
-	if areDebugging && *debugWriter != nil {
-		output := fmt.Sprintf("[DEBUG] %s\n", input)
-		(*debugWriter).Write([]byte(output))
-	}
+	debugPrintf = print.Debugf(set, writer)
 }
 
 //CMD that keybase will use to execute this plugin
@@ -83,13 +75,13 @@ func (a activePlugin) Help() string {
 func (a activePlugin) Get(input string) (string, error) {
 	url := fmt.Sprintf(urlFMT, input, os.Getenv("CHATBOT_WEATHER"), unit)
 	client := &http.Client{}
-	debug(fmt.Sprintf("Creating GET request to %s", url))
+	debugPrintf("Creating GET request to %s\n", url)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return "", fmt.Errorf("[Weather Error] creating request %v", err)
 	}
 	req.Header.Set("User-Agent", userAgent)
-	debug(fmt.Sprintf("Sending request %v", req))
+	debugPrintf("Sending request %v\n", req)
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("[Weather Error] sending request %v", err)
@@ -101,7 +93,7 @@ func (a activePlugin) Get(input string) (string, error) {
 		return "", fmt.Errorf("[Weather Error] reading from resp body %v", err)
 	}
 	o := &OpenWeather{}
-	debug(fmt.Sprintf("Unmarshalling json with length of %d", len(buf.Bytes())))
+	debugPrintf("Unmarshalling json with length of %d\n", len(buf.Bytes()))
 	if err := json.Unmarshal(buf.Bytes(), o); err != nil {
 		return "", fmt.Errorf("[Weather Error] unmarshalling response %v", err)
 	}
@@ -110,26 +102,26 @@ func (a activePlugin) Get(input string) (string, error) {
 	}
 	output := fmt.Sprintf("Weather Description: %s\nTemperature: %.2f\tHumidity: %d\tMin: %.2f\tMax: %.2f\n",
 		o.Weather[0].Description, o.Temperature.Temp, o.Temperature.Humidity, o.Temperature.Min, o.Temperature.Max)
-	debug(fmt.Sprintf("Message sending to user\n%s", output))
+	debugPrintf("Message sending to user\n%s\n", output)
 	return output, nil
 }
 
 //Send export method that satisfies an interface in the main program.
 //This Send method will send the results to the message ID that sent the request.
 func (a activePlugin) Send(subscription kbchat.SubscriptionMessage, msg string) error {
-	debug("Starting kbchat")
+	debugPrintf("Starting kbchat\n")
 	w, err := kbchat.Start("chat")
 	if err != nil {
 		return fmt.Errorf("[Weather Error] in send request %v", err)
 	}
-	debug(fmt.Sprintf("Sending this message to messageID: %s\n%s", subscription.Conversation.ID, msg))
+	debugPrintf("Sending this message to messageID: %s\n%s\n", subscription.Conversation.ID, msg)
 	if err := w.SendMessage(subscription.Conversation.ID, msg); err != nil {
 		if err := w.Proc.Kill(); err != nil {
 			return err
 		}
 		return err
 	}
-	debug("Killing child process")
+	debugPrintf("Killing child process\n")
 	return w.Proc.Kill()
 }
 

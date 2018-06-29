@@ -32,6 +32,7 @@ func setuplistener() error {
 	if err != nil {
 		return fmt.Errorf("Couldn't set up listener %v", err)
 	}
+	defer listener.Close()
 	s, err := listener.Accept()
 	if err != nil {
 		return err
@@ -55,6 +56,7 @@ func setuplistener() error {
 }
 
 func TestInfo(t *testing.T) {
+	AP.Debug(false, nil)
 	output, err := AP.Get("info")
 	if err != nil {
 		t.Fatal(err)
@@ -66,6 +68,7 @@ func TestInfo(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
+	AP.Debug(false, nil)
 	go func() {
 		err := setuplistener()
 		if err != nil {
@@ -88,9 +91,16 @@ func TestGet(t *testing.T) {
 }
 
 func TestSend(t *testing.T) {
+	AP.Debug(false, nil)
 	sub := kbchat.SubscriptionMessage{}
 	sub.Conversation.ID = chatID
-	go setuplistener()
+	go func() {
+		err := setuplistener()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
+	time.Sleep(1 * time.Second)
 	server := fmt.Sprintf("localhost:%d", port)
 	args := fmt.Sprintf("-p %d localhost", port)
 	input := fmt.Sprintf("%s %s", server, args)
@@ -108,6 +118,7 @@ func TestSend(t *testing.T) {
 }
 
 func TestRandomSecretKey(t *testing.T) {
+	AP.Debug(false, nil)
 	if err := randomSecretKey(); err != nil {
 		t.Fatal(err)
 	}

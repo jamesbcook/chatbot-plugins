@@ -29,6 +29,7 @@ func TestPwnedPasswordRange(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
+	AP.Debug(false, nil)
 	res, err := AP.Get("hunter2")
 	if err != nil {
 		t.Fatalf("Error in get request %v", err)
@@ -39,6 +40,7 @@ func TestGet(t *testing.T) {
 }
 
 func TestSend(t *testing.T) {
+	AP.Debug(false, nil)
 	sub := kbchat.SubscriptionMessage{}
 	sub.Conversation.ID = chatID
 	res, err := AP.Get("hunter2")

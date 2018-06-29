@@ -26,7 +26,7 @@ func TestDebugInternal(t *testing.T) {
 	var output io.Writer
 	output = os.Stdout
 	AP.Debug(true, &output)
-	debug("A debug statement")
+	debugPrintf("A debug statement\n")
 }
 
 func TestSendExport(t *testing.T) {

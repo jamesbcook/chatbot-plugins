@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 
 	"github.com/jamesbcook/chatbot/kbchat"
+	"github.com/jamesbcook/print"
 )
 
 const (
@@ -19,8 +19,7 @@ const (
 )
 
 var (
-	areDebugging = false
-	debugWriter  *io.Writer
+	debugPrintf func(format string, v ...interface{})
 )
 
 type activePlugin string
@@ -46,15 +45,7 @@ type customError struct {
 }
 
 func (a activePlugin) Debug(set bool, writer *io.Writer) {
-	areDebugging = set
-	debugWriter = writer
-}
-
-func debug(input string) {
-	if areDebugging && *debugWriter != nil {
-		output := fmt.Sprintf("[DEBUG] %s\n", input)
-		(*debugWriter).Write([]byte(output))
-	}
+	debugPrintf = print.Debugf(set, writer)
 }
 
 //CMD that keybase will use to execute this plugin
@@ -70,7 +61,7 @@ func (a activePlugin) Help() string {
 //Get export method that satisfies an interface in the main program.
 //This Get method will query the Google URL shortener api.
 func (a activePlugin) Get(input string) (string, error) {
-	debug("Setting up POST request")
+	debugPrintf("Setting up POST request\n")
 	finalURL := fmt.Sprintf(url, os.Getenv("CHATBOT_URL_SHORTEN"))
 	urlToShorten := fmt.Sprintf(`{"longUrl": "%s"}`, input)
 	req, err := http.NewRequest("POST", finalURL, bytes.NewBufferString(urlToShorten))
@@ -80,13 +71,13 @@ func (a activePlugin) Get(input string) (string, error) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", userAgent)
 	client := &http.Client{}
-	debug(fmt.Sprintf("Sending post request for %s", urlToShorten))
+	debugPrintf("Sending post request for %s\n", urlToShorten)
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", err
 	}
 	defer resp.Body.Close()
-	debug(fmt.Sprintf("Reading %d of response data", resp.ContentLength))
+	debugPrintf("Reading %d of response data\n", resp.ContentLength)
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
@@ -95,7 +86,7 @@ func (a activePlugin) Get(input string) (string, error) {
 	if err := json.Unmarshal(body, shorten); err != nil {
 		return "", err
 	}
-	debug(fmt.Sprintf("ShortenAPI %v", shorten))
+	debugPrintf("ShortenAPI %v\n", shorten)
 	if shorten.Error.Code != 0 {
 		return "", fmt.Errorf("Non 0 error code")
 	}
@@ -105,25 +96,25 @@ func (a activePlugin) Get(input string) (string, error) {
 //Send export method that satisfies an interface in the main program.
 //This Send method will send the results to the message ID that sent the request.
 func (a activePlugin) Send(subscription kbchat.SubscriptionMessage, msg string) error {
-	debug("Starting kbchat")
+	debugPrintf("Starting kbchat\n")
 	w, err := kbchat.Start("chat")
 	if err != nil {
 		return fmt.Errorf("[URL Short Error] in send request %v", err)
 	}
-	debug(fmt.Sprintf("Sending this message to messageID: %s\n%s", subscription.Conversation.ID, msg))
+	debugPrintf("Sending this message to messageID: %s\n%s\n", subscription.Conversation.ID, msg)
 	if err := w.SendMessage(subscription.Conversation.ID, msg); err != nil {
 		if err := w.Proc.Kill(); err != nil {
 			return err
 		}
 		return err
 	}
-	debug("Killing child process")
+	debugPrintf("Killing child process\n")
 	return w.Proc.Kill()
 }
 
 func init() {
 	if api := os.Getenv("CHATBOT_URL_SHORTEN"); api == "" {
-		log.Println("Missing CHATBOT_URL_SHORTEN environment variable")
+		print.Warningln("Missing CHATBOT_URL_SHORTEN environment variable")
 	}
 }
 

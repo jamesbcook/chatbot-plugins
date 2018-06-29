@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/jamesbcook/chatbot/kbchat"
+	"github.com/jamesbcook/print"
 )
 
 const (
@@ -17,8 +18,7 @@ const (
 )
 
 var (
-	areDebugging = false
-	debugWriter  *io.Writer
+	debugPrintf func(format string, v ...interface{})
 )
 
 type activePlugin string
@@ -41,15 +41,7 @@ type Kind struct {
 }
 
 func (a activePlugin) Debug(set bool, writer *io.Writer) {
-	areDebugging = set
-	debugWriter = writer
-}
-
-func debug(input string) {
-	if areDebugging && *debugWriter != nil {
-		output := fmt.Sprintf("[DEBUG] %s\n", input)
-		(*debugWriter).Write([]byte(output))
-	}
+	debugPrintf = print.Debugf(set, writer)
 }
 
 //CMD that keybase will use to execute this plugin
@@ -67,25 +59,25 @@ func (a activePlugin) Help() string {
 func (a activePlugin) Get(input string) (string, error) {
 	url := fmt.Sprintf(jsonURL, input)
 	client := &http.Client{}
-	debug(fmt.Sprintf("Creating GET request to %s", url))
+	debugPrintf("Creating GET request to %s\n", url)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return "", fmt.Errorf("[Reddit Error] creating request %v", err)
 	}
 	req.Header.Set("User-Agent", userAgent)
-	debug(fmt.Sprintf("Sending request %v", req))
+	debugPrintf("Sending request %v\n", req)
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("[Reddit Error] sending request %v", err)
 	}
 	defer resp.Body.Close()
 	var buf bytes.Buffer
-	debug(fmt.Sprintf("Reading resp.Body"))
+	debugPrintf("Reading resp.Body\n")
 	_, err = buf.ReadFrom(resp.Body)
 	if err != nil {
 		return "", fmt.Errorf("[Reddit Error] reading from resp body %v", err)
 	}
-	debug(fmt.Sprintf("Unmarshalling json with length of %d", len(buf.Bytes())))
+	debugPrintf("Unmarshalling json with length of %d\n", len(buf.Bytes()))
 	k := &Kind{}
 	if err := json.Unmarshal(buf.Bytes(), k); err != nil {
 		return "", fmt.Errorf("[Reddit Error] unmarshalling response %v", err)
@@ -109,26 +101,26 @@ func (a activePlugin) Get(input string) (string, error) {
 			break
 		}
 	}
-	debug(fmt.Sprintf("Message sending to user\n%s", msg))
+	debugPrintf("Message sending to user\n%s\n", msg)
 	return msg, nil
 }
 
 //Send export method that satisfies an interface in the main program.
 //This Send method will send the results to the message ID that sent the request.
 func (a activePlugin) Send(subscription kbchat.SubscriptionMessage, msg string) error {
-	debug("Starting kbchat")
+	debugPrintf("Starting kbchat\n")
 	w, err := kbchat.Start("chat")
 	if err != nil {
 		return fmt.Errorf("[Reddit Error] in send request %v", err)
 	}
-	debug(fmt.Sprintf("Sending this message to messageID: %s\n%s", subscription.Conversation.ID, msg))
+	debugPrintf("Sending this message to messageID: %s\n%s\n", subscription.Conversation.ID, msg)
 	if err := w.SendMessage(subscription.Conversation.ID, msg); err != nil {
 		if err := w.Proc.Kill(); err != nil {
 			return err
 		}
 		return err
 	}
-	debug("Killing child process")
+	debugPrintf("Killing child process\n")
 	return w.Proc.Kill()
 }
 

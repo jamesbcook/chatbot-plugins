@@ -9,15 +9,15 @@ import (
 	"time"
 
 	"github.com/jamesbcook/chatbot/kbchat"
+	"github.com/jamesbcook/print"
 )
 
 var (
-	areDebugging = false
-	debugWriter  *io.Writer
-	minute       = regexp.MustCompile("minute|minutes")
-	hour         = regexp.MustCompile("hour|hours")
-	day          = regexp.MustCompile("day|days")
-	reminders    = []*remindBucket{}
+	debugPrintf func(format string, v ...interface{})
+	minute      = regexp.MustCompile("minute|minutes")
+	hour        = regexp.MustCompile("hour|hours")
+	day         = regexp.MustCompile("day|days")
+	reminders   = []*remindBucket{}
 )
 
 type activePlugin string
@@ -34,15 +34,7 @@ type remindBucket struct {
 type duration func() time.Duration
 
 func (a activePlugin) Debug(set bool, writer *io.Writer) {
-	areDebugging = set
-	debugWriter = writer
-}
-
-func debug(input string) {
-	if areDebugging && *debugWriter != nil {
-		output := fmt.Sprintf("[DEBUG] %s\n", input)
-		(*debugWriter).Write([]byte(output))
-	}
+	debugPrintf = print.Debugf(set, writer)
 }
 
 //CMD that keybase will use to execute this plugin
@@ -56,17 +48,17 @@ func (a activePlugin) Help() string {
 }
 
 func minuteFunc() time.Duration {
-	debug("minute reminder")
+	debugPrintf("minute reminder\n")
 	return time.Minute
 }
 
 func hourFunc() time.Duration {
-	debug("hour reminder")
+	debugPrintf("hour reminder\n")
 	return time.Hour
 }
 
 func dayFunc() time.Duration {
-	debug("day reminder")
+	debugPrintf("day reminder\n")
 	return time.Hour * 24
 }
 
@@ -92,7 +84,7 @@ func getReminder() {
 //Get export method that satisfies an interface in the main program.
 //This Get method will query reddit json api.
 func (a activePlugin) Get(input string) (string, error) {
-	debug(fmt.Sprintf("Got input %s", input))
+	debugPrintf("Got input %s\n", input)
 	args := strings.Split(input, " ")
 	if len(args) <= 2 {
 		return "", fmt.Errorf("Not enough arguments")
@@ -103,7 +95,7 @@ func (a activePlugin) Get(input string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("%s is not an int", num)
 	}
-	debug(fmt.Sprintf("Checking if %s is valid", duration))
+	debugPrintf("Checking if %s is valid\n", duration)
 	if minute.MatchString(duration) ||
 		hour.MatchString(duration) ||
 		day.MatchString(duration) {
@@ -115,7 +107,7 @@ func (a activePlugin) Get(input string) (string, error) {
 //Send export method that satisfies an interface in the main program.
 //This Send method will send the results to the message ID that sent the request.
 func (a activePlugin) Send(subscription kbchat.SubscriptionMessage, msg string) error {
-	debug(fmt.Sprintf("Got message %s from ID %s", msg, subscription.Conversation.ID))
+	debugPrintf("Got message %s from ID %s\n", msg, subscription.Conversation.ID)
 	args := strings.Split(msg, " ")
 	num := args[0]
 	duration := args[1]
@@ -125,7 +117,7 @@ func (a activePlugin) Send(subscription kbchat.SubscriptionMessage, msg string) 
 		return fmt.Errorf("%s is not an int", num)
 	}
 	reminder := &remindBucket{}
-	debug(fmt.Sprintf("Finding correct function for %s", duration))
+	debugPrintf("Finding correct function for %s\n", duration)
 	if minute.MatchString(duration) {
 		reminder = setRemindMe(numInt, message, minuteFunc)
 	} else if hour.MatchString(duration) {
@@ -133,29 +125,29 @@ func (a activePlugin) Send(subscription kbchat.SubscriptionMessage, msg string) 
 	} else if day.MatchString(duration) {
 		reminder = setRemindMe(numInt, message, dayFunc)
 	}
-	debug(fmt.Sprintf("Adding %v to reminders", reminder))
+	debugPrintf("Adding %v to reminders\n", reminder)
 	reminder.Sender = subscription.Conversation.ID
 	reminders = append(reminders, reminder)
-	debug(fmt.Sprintf("Number of reminders now %d", len(reminders)))
+	debugPrintf("Number of reminders now %d\n", len(reminders))
 	t := fmt.Sprintf("Your reminder is set for %s", reminder.T.Format("2006 Jan 2 15:04:05 UTC"))
-	debug(fmt.Sprintf("Sending %s to user", t))
+	debugPrintf("Sending %s to user\n", t)
 	return send(subscription.Conversation.ID, t)
 }
 
 func send(msgID, msg string) error {
-	debug("Starting kbchat")
+	debugPrintf("Starting kbchat\n")
 	w, err := kbchat.Start("chat")
 	if err != nil {
 		return fmt.Errorf("[Remindme Error] in send request %v", err)
 	}
-	debug(fmt.Sprintf("Sending this message to messageID: %s\n%s", msgID, msg))
+	debugPrintf("Sending this message to messageID: %s\n%s\n", msgID, msg)
 	if err := w.SendMessage(msgID, msg); err != nil {
 		if err := w.Proc.Kill(); err != nil {
 			return err
 		}
 		return err
 	}
-	debug("Killing child process")
+	debugPrintf("Killing child process\n")
 	return w.Proc.Kill()
 }
 

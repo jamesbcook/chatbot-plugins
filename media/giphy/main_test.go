@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"os"
 	"testing"
 
@@ -12,14 +11,8 @@ const (
 	chatID = ""
 )
 
-func init() {
-	err := os.Setenv("CHATBOT_GIPHY", "")
-	if err != nil {
-		log.Fatalf("Error in getting env var %v", err)
-	}
-}
-
 func TestGiphy(t *testing.T) {
+	AP.Debug(false, nil)
 	res, err := AP.Get("Hackers")
 	if err != nil {
 		t.Fatalf("Error getting gif from Giphy %v", err)
@@ -36,6 +29,7 @@ func TestGiphy(t *testing.T) {
 }
 
 func TestSend(t *testing.T) {
+	AP.Debug(false, nil)
 	sub := kbchat.SubscriptionMessage{}
 	sub.Conversation.ID = chatID
 	res, err := AP.Get("Hackers")

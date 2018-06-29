@@ -1,14 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"io"
-	"log"
 	"os"
 	"time"
 
 	"github.com/jamesbcook/chatbot/kbchat"
 	"github.com/jamesbcook/chatbot/kbchat/team"
+	"github.com/jamesbcook/print"
 )
 
 type backgroundPlugin string
@@ -23,7 +22,7 @@ var Auth authenticator
 var (
 	users        = []string{}
 	areDebugging = false
-	debugWriter  *io.Writer
+	debugPrintf  func(format string, v ...interface{})
 )
 
 //Name that keybase will use for background plugins
@@ -33,15 +32,7 @@ func (b backgroundPlugin) Name() string {
 
 //Debug output
 func (b backgroundPlugin) Debug(set bool, writer *io.Writer) {
-	areDebugging = set
-	debugWriter = writer
-}
-
-func debug(input string) {
-	if areDebugging && *debugWriter != nil {
-		output := fmt.Sprintf("[DEBUG] %s\n", input)
-		(*debugWriter).Write([]byte(output))
-	}
+	debugPrintf = print.Debugf(set, writer)
 }
 
 //Start the process of gathering uses based on the team name in the env var.
@@ -49,14 +40,14 @@ func (a authenticator) Start() {
 	for {
 		w, err := kbchat.Start("team")
 		if err != nil {
-			debug(fmt.Sprintf("[Team Error] getting team api %v", err.Error()))
+			debugPrintf("[Team Error] getting team api %v\n", err.Error())
 			time.Sleep(5 * time.Minute)
 			continue
 		}
 		teamName := os.Getenv("CHATBOT_TEAM")
 		output, err := team.Get(w, teamName, team.Members)
 		if err != nil {
-			debug(fmt.Sprintf("[Team Error] getting team members %v", err.Error()))
+			debugPrintf("[Team Error] getting team members %v\n", err.Error())
 			continue
 		}
 		users = make([]string, len(output))
@@ -64,7 +55,7 @@ func (a authenticator) Start() {
 			users[x] = user.Username
 		}
 		if err := w.Proc.Kill(); err != nil {
-			debug(fmt.Sprintf("[Team Error] killing process %v", err))
+			debugPrintf("[Team Error] killing process %v\n", err)
 		}
 		time.Sleep(5 * time.Minute)
 	}
@@ -83,7 +74,7 @@ func (a authenticator) Validate(user string) bool {
 func init() {
 	teamName := os.Getenv("CHATBOT_TEAM")
 	if teamName == "" {
-		log.Println("Missing CHATBOT_TEAM environment variable")
+		print.Warningln("Missing CHATBOT_TEAM environment variable")
 	}
 }
 

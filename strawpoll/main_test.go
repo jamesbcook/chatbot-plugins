@@ -11,6 +11,7 @@ const (
 )
 
 func TestGet(t *testing.T) {
+	AP.Debug(false, nil)
 	output, err := AP.Get("15832795")
 	if err != nil {
 		t.Fatalf("Error getting info %v", err)
@@ -21,6 +22,7 @@ func TestGet(t *testing.T) {
 }
 
 func TestGetCreate(t *testing.T) {
+	AP.Debug(false, nil)
 	output, err := AP.Get(`"This is my title" "something, something2, something3" "false" "normal" "true"`)
 	if err != nil {
 		t.Fatalf("Error getting info %v", err)
@@ -31,6 +33,7 @@ func TestGetCreate(t *testing.T) {
 }
 
 func TestSend(t *testing.T) {
+	AP.Debug(false, nil)
 	sub := kbchat.SubscriptionMessage{}
 	sub.Conversation.ID = chatID
 	output, err := AP.Get("15832795")

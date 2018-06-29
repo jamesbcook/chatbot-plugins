@@ -12,6 +12,7 @@ const (
 )
 
 func TestURL(t *testing.T) {
+	AP.Debug(false, nil)
 	res, err := url("https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png")
 	if err != nil {
 		t.Fatalf("Error getting url %v", err)
@@ -22,6 +23,7 @@ func TestURL(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
+	AP.Debug(false, nil)
 	testURL := "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png"
 	res, err := AP.Get(testURL)
 	if err != nil {
@@ -38,6 +40,7 @@ func TestGet(t *testing.T) {
 	}
 }
 func TestSend(t *testing.T) {
+	AP.Debug(false, nil)
 	sub := kbchat.SubscriptionMessage{}
 	sub.Conversation.ID = chatID
 	testURL := "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png"

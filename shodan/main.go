@@ -4,17 +4,16 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"strings"
 
 	"github.com/jamesbcook/chatbot/kbchat"
+	"github.com/jamesbcook/print"
 	"gopkg.in/ns3777k/go-shodan.v3/shodan"
 )
 
 var (
-	areDebugging = false
-	debugWriter  *io.Writer
+	debugPrintf func(format string, v ...interface{})
 )
 
 type activePlugin string
@@ -23,15 +22,7 @@ type activePlugin string
 var AP activePlugin
 
 func (a activePlugin) Debug(set bool, writer *io.Writer) {
-	areDebugging = set
-	debugWriter = writer
-}
-
-func debug(input string) {
-	if areDebugging && *debugWriter != nil {
-		output := fmt.Sprintf("[DEBUG] %s\n", input)
-		(*debugWriter).Write([]byte(output))
-	}
+	debugPrintf = print.Debugf(set, writer)
 }
 
 //CMD that keybase will use to execute this plugin
@@ -50,7 +41,7 @@ func (a activePlugin) Help() string {
 func (a activePlugin) Get(input string) (string, error) {
 	api := os.Getenv("CHATBOT_SHODAN")
 	sc := shodan.NewClient(nil, api)
-	debug(fmt.Sprintf("Query Shodan API for %s", input))
+	debugPrintf("Query Shodan API for %s\n", input)
 	res, err := sc.GetServicesForHost(context.Background(), input, nil)
 	if err != nil {
 		return "", fmt.Errorf("[Shodan Error] in get request %v", err)
@@ -86,32 +77,32 @@ func (a activePlugin) Get(input string) (string, error) {
 		service += "\n"
 		output += service
 	}
-	debug(fmt.Sprintf("Sending the following to user:\n%s", output))
+	debugPrintf("Sending the following to user:\n%s\n", output)
 	return output, nil
 }
 
 //Send export method that satisfies an interface in the main program.
 //This Send method will respond with the results to the message ID that sent the request.
 func (a activePlugin) Send(subscription kbchat.SubscriptionMessage, msg string) error {
-	debug("Starting kbchat")
+	debugPrintf("Starting kbchat\n")
 	w, err := kbchat.Start("chat")
 	if err != nil {
 		return fmt.Errorf("[Shodan Error] in send request %v", err)
 	}
-	debug(fmt.Sprintf("Sending %s to %s", msg, subscription.Conversation.ID))
+	debugPrintf("Sending %s to %s\n", msg, subscription.Conversation.ID)
 	if err := w.SendMessage(subscription.Conversation.ID, msg); err != nil {
 		if err := w.Proc.Kill(); err != nil {
 			return err
 		}
 		return err
 	}
-	debug("Killing child process")
+	debugPrintf("Killing child process\n")
 	return w.Proc.Kill()
 }
 
 func init() {
 	if api := os.Getenv("CHATBOT_SHODAN"); api == "" {
-		log.Println("Missing CHATBOT_SHODAN environment variable")
+		print.Warningln("Missing CHATBOT_SHODAN environment variable")
 	}
 }
 

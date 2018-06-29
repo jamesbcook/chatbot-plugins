@@ -6,6 +6,7 @@ import (
 
 	"github.com/jamesbcook/chatbot-plugins/hibp"
 	"github.com/jamesbcook/chatbot/kbchat"
+	"github.com/jamesbcook/print"
 )
 
 const (
@@ -15,8 +16,7 @@ const (
 )
 
 var (
-	areDebugging = false
-	debugWriter  *io.Writer
+	debugPrintf func(format string, v ...interface{})
 )
 
 type activePlugin string
@@ -25,15 +25,7 @@ type activePlugin string
 var AP activePlugin
 
 func (a activePlugin) Debug(set bool, writer *io.Writer) {
-	areDebugging = set
-	debugWriter = writer
-}
-
-func debug(input string) {
-	if areDebugging && *debugWriter != nil {
-		output := fmt.Sprintf("[DEBUG] %s\n", input)
-		(*debugWriter).Write([]byte(output))
-	}
+	debugPrintf = print.Debugf(set, writer)
 }
 
 //CMD that keybase will use to execute this plugin
@@ -49,32 +41,32 @@ func (a activePlugin) Help() string {
 //Get export method that satisfies an interface in the main program.
 //This Get method will query the hibp password api.
 func (a activePlugin) Get(input string) (string, error) {
-	debug(fmt.Sprintf("Sending %s to HIBP Password API", input))
+	debugPrintf("Sending %s to HIBP Password API\n", input)
 	res, err := hibp.Get(input, pwnedPassword)
 	if err != nil {
 		return "", fmt.Errorf("[HIBP-Password Error] There was an error with your request")
 	}
 	msg := fmt.Sprintf("Password has been seen %s times", string(res))
-	debug(fmt.Sprintf("Returning the following message to user\n%s", msg))
+	debugPrintf("Returning the following message to user\n%s\n", msg)
 	return msg, nil
 }
 
 //Send export method that satisfies an interface in the main program.
 //This Send method will send the results to the message ID that sent the request.
 func (a activePlugin) Send(subscription kbchat.SubscriptionMessage, msg string) error {
-	debug("Starting kbchat")
+	debugPrintf("Starting kbchat\n")
 	w, err := kbchat.Start("chat")
 	if err != nil {
 		return fmt.Errorf("[HIBP-Password Error] sending message %v", err)
 	}
-	debug(fmt.Sprintf("Sending this message to messageID: %s\n%s", subscription.Conversation.ID, msg))
+	debugPrintf("Sending this message to messageID: %s\n%s\n", subscription.Conversation.ID, msg)
 	if err := w.SendMessage(subscription.Conversation.ID, msg); err != nil {
 		if err := w.Proc.Kill(); err != nil {
 			return err
 		}
 		return err
 	}
-	debug("Killing child process")
+	debugPrintf("Killing child process\n")
 	return w.Proc.Kill()
 }
 

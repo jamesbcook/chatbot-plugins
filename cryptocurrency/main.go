@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/jamesbcook/chatbot/kbchat"
+	"github.com/jamesbcook/print"
 )
 
 const (
@@ -24,10 +25,9 @@ type activePlugin string
 var AP activePlugin
 
 var (
-	areDebugging = false
-	debugWriter  *io.Writer
-	nameMap      = make(map[string]int)
-	symbolMap    = make(map[string]int)
+	debugPrintf func(format string, v ...interface{})
+	nameMap     = make(map[string]int)
+	symbolMap   = make(map[string]int)
 )
 
 //Listing results
@@ -83,15 +83,7 @@ type tickerSpecific struct {
 }
 
 func (a activePlugin) Debug(set bool, writer *io.Writer) {
-	areDebugging = set
-	debugWriter = writer
-}
-
-func debug(input string) {
-	if areDebugging && *debugWriter != nil {
-		output := fmt.Sprintf("[DEBUG] %s\n", input)
-		(*debugWriter).Write([]byte(output))
-	}
+	debugPrintf = print.Debugf(set, writer)
 }
 
 //CMD that keybase will use to execute this plugin
@@ -110,29 +102,27 @@ func updateListing() {
 		req, err := http.NewRequest("GET", listingURL, nil)
 		if err != nil {
 			errMsg := fmt.Errorf("[Crypto Error] making http request %v", err)
-			debug(errMsg.Error())
+			debugPrintf("%v\n", errMsg.Error())
 			continue
 		}
 		req.Header.Set("User-Agent", userAgent)
 		client := &http.Client{}
-		debug(fmt.Sprintf("Sending request %v", req))
 		resp, err := client.Do(req)
 		if err != nil {
 			errMsg := fmt.Errorf("[Crypto Error] making do request %v", err)
-			debug(errMsg.Error())
+			debugPrintf("%v\n", errMsg.Error())
 			continue
 		}
 		defer resp.Body.Close()
 		buf, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			errMsg := fmt.Errorf("[Crypto Error] reading resp body %v", err)
-			debug(errMsg.Error())
+			debugPrintf("%v\n", errMsg.Error())
 			continue
 		}
-		debug(fmt.Sprintf("response length %d", len(buf)))
 		if err := json.Unmarshal(buf, l); err != nil {
 			errMsg := fmt.Errorf("[Crypto Error] unmarshal request %v", err)
-			debug(errMsg.Error())
+			debugPrintf("%v\n", errMsg.Error())
 			continue
 		}
 		for _, coin := range l.Data {
@@ -149,7 +139,7 @@ func updateListing() {
 //Get export method that satisfies an interface in the main program.
 //This Get method will query the coinmarketcap api.
 func (a activePlugin) Get(input string) (string, error) {
-	debug(fmt.Sprintf("Got Input: %s", input))
+	debugPrintf("Got Input: %s\n", input)
 	var id int
 	lowerInput := strings.ToLower(input)
 	if _, ok := nameMap[lowerInput]; ok {
@@ -158,66 +148,69 @@ func (a activePlugin) Get(input string) (string, error) {
 		id = symbolMap[lowerInput]
 	} else {
 		err := fmt.Errorf("%s not found", input)
-		debug(err.Error())
+		debugPrintf("%v\n", err.Error())
 		return "", err
 	}
 	url := fmt.Sprintf(priceURL, id)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		errMsg := fmt.Errorf("[Crypto Error] new request %v", err)
-		debug(errMsg.Error())
+		debugPrintf("%v\n", errMsg.Error())
 		return "", errMsg
 	}
 	req.Header.Set("User-Agent", userAgent)
 	client := &http.Client{}
-	debug(fmt.Sprintf("Sending req %v", req))
+	debugPrintf("Sending req %v\n", req)
 	resp, err := client.Do(req)
 	if err != nil {
 		errMsg := fmt.Errorf("[Crypto Error] do request %v", err)
-		debug(errMsg.Error())
+		debugPrintf("%v\n", errMsg.Error())
 		return "", errMsg
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		errMsg := fmt.Errorf("[Crypto Error] reading resp body %v", err)
-		debug(errMsg.Error())
+		debugPrintf("%v\n", errMsg.Error())
 		return "", errMsg
 	}
-	debug(fmt.Sprintf("Response size %d", len(body)))
+	debugPrintf("Response size %d\n", len(body))
 	t := &tickerSpecific{}
 	if err := json.Unmarshal(body, t); err != nil {
 		errMsg := fmt.Errorf("[Crypto Error] unmarshal %v", err)
-		debug(errMsg.Error())
+		debugPrintf("%v\n", errMsg.Error())
 		return "", errMsg
 	}
 	output := fmt.Sprintf("Name: %-8s\tUSD: %-6.2f\tBTC: %-10.9f", t.Data.Name, t.Data.Quotes.USD.Price, t.Data.Quotes.BTC.Price)
-	debug(fmt.Sprintf("Returning %s", output))
+	debugPrintf("Returning %s\n", output)
 	return output, nil
 }
 
 //Send export method that satisfies an interface in the main program.
 //This Send method will send the results to the message ID that sent the request.
 func (a activePlugin) Send(subscription kbchat.SubscriptionMessage, msg string) error {
-	debug("Starting kbchat")
+	debugPrintf("Starting kbchat\n")
 	w, err := kbchat.Start("chat")
 	if err != nil {
 		errMsg := fmt.Errorf("[Crypto Error] sending message %v", err)
-		debug(errMsg.Error())
+		debugPrintf("%v\n", errMsg.Error())
 		return errMsg
 	}
-	debug(fmt.Sprintf("Sending this message to messageID: %s\n%s", subscription.Conversation.ID, msg))
+	debugPrintf("Sending this message to messageID: %s\n%s\n", subscription.Conversation.ID, msg)
 	if err := w.SendMessage(subscription.Conversation.ID, msg); err != nil {
 		if err := w.Proc.Kill(); err != nil {
 			return err
 		}
 		return err
 	}
-	debug("Killing child process")
+	debugPrintf("Killing child process\n")
 	return w.Proc.Kill()
 }
 
 func init() {
+	debugPrintf = func(format string, v ...interface{}) {
+		return
+	}
 	go updateListing()
 }
 
