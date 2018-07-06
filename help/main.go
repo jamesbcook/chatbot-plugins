@@ -13,7 +13,7 @@ const (
 )
 
 var (
-	version     = "0.17.0"
+	version     string
 	msg         string
 	debugPrintf func(format string, v ...interface{})
 )
