@@ -114,28 +114,38 @@ func (a activePlugin) Send(subscription kbchat.SubscriptionMessage, msg string) 
 	return w.Proc.Kill()
 }
 
-func team(c kbchat.API, args ...string) error {
-	name := args[0]
-	channel := args[1]
-	msg := args[2]
+type sender interface {
+	send(c kbchat.API) error
+}
+
+type messageArgs struct {
+	args []string
+}
+type team messageArgs
+type dm messageArgs
+
+func (t team) send(c kbchat.API) error {
+	name := t.args[0]
+	channel := t.args[1]
+	msg := t.args[2]
 	debugPrintf("Sending this message to team %s in channel: %s\n%s\n", name, channel, msg)
 	return c.SendMessageByTeamName(name, msg, &channel)
 }
 
-func dm(c kbchat.API, args ...string) error {
-	name := args[0]
-	msg := args[1]
+func (d dm) send(c kbchat.API) error {
+	name := d.args[0]
+	msg := d.args[1]
 	debugPrintf("Sending this message to channel: %s\n%s\n", name, msg)
 	return c.SendMessageByTlfName(name, msg)
 }
 
-func send(f func(c kbchat.API, args ...string) error, args ...string) error {
+func send(f sender) error {
 	debugPrintf("Starting kbchat\n")
 	c, err := kbchat.Start("chat")
 	if err != nil {
 		return fmt.Errorf("[API Error] in send request %v", err)
 	}
-	if err := f(*c, args...); err != nil {
+	if err := f.send(*c); err != nil {
 		if err := c.Proc.Kill(); err != nil {
 			return err
 		}
@@ -184,10 +194,16 @@ func handle(session *network.Session) {
 			return
 		}
 		debugPrintf("Got %s Message\n", msg.ID.String())
+		var s sender
 		if msg.ChatType == api.ChatType_Team {
-			send(team, msg.Chat.Team, msg.Chat.Channel, string(msg.IO))
+			s = team{args: []string{msg.Chat.Team, msg.Chat.Channel, string(msg.IO)}}
 		} else {
-			send(dm, msg.Chat.Channel, string(msg.IO))
+			s = dm{args: []string{msg.Chat.Channel, string(msg.IO)}}
+		}
+		if err := send(s); err != nil {
+			print.Warningln(err)
+			session.Close()
+			continue
 		}
 		length := rand.Intn(48)
 		buf := make([]byte, length)

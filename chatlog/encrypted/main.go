@@ -1,18 +1,17 @@
 package main
 
 import (
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/rand"
 	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
+	"sync"
 	"time"
 
+	"github.com/jamesbcook/chatbot-external-api/crypto"
+	"github.com/jamesbcook/chatbot-external-api/filesystem"
 	"github.com/jamesbcook/chatbot-plugins/chatlog"
 	"github.com/jamesbcook/print"
-	"golang.org/x/crypto/scrypt"
 )
 
 type logging string
@@ -24,10 +23,16 @@ var Logger logging
 var (
 	err          error
 	l            = &logger{}
-	aesgcm       cipher.AEAD
+	ourState     = &state{}
 	areDebugging = false
 	debugPrintf  func(format string, v ...interface{})
 )
+
+type state struct {
+	symmetric *crypto.Symmetric
+	mutex     sync.RWMutex
+	file      string
+}
 
 type logger struct {
 	f *os.File
@@ -46,17 +51,10 @@ func (b backgroundPlugin) Debug(set bool, writer *io.Writer) {
 //Write encrypted data to a log file. Random 12 byte nonce is used, and put
 //in front of the cipher text
 func (lo logging) Write(p []byte) (int, error) {
-	// Never use more than 2^32 random nonces with a given key because of the risk of a repeat.
-	nonce := make([]byte, 12)
-	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
-		panic(err.Error())
-	}
-
-	ciphertext := aesgcm.Seal(nil, nonce, p, nil)
-	saved := make([]byte, len(ciphertext)+12)
-	copy(saved, nonce)
-	copy(saved[12:], ciphertext)
-	return l.write(saved)
+	ourState.mutex.Lock()
+	ciphertext := encrypt(p)
+	ourState.mutex.Unlock()
+	return l.write(ciphertext)
 }
 
 //Start logging and return file handle
@@ -77,53 +75,98 @@ func (l *logger) write(p []byte) (int, error) {
 	return l.f.Write([]byte(formated))
 }
 
+func encrypt(input []byte) []byte {
+	nonce, err := crypto.GenerateNonce()
+	if err != nil {
+		print.Badln(err)
+	}
+	debugPrintf("Nonce %x\n", (*nonce)[:])
+	copy(ourState.symmetric.Nonce[:], (*nonce)[:])
+	encryptedDate, err := ourState.symmetric.Encrypt(input)
+	if err != nil {
+		print.Badln(err)
+	}
+	debugPrintf("Encrypted Data %x\n", encryptedDate)
+	output := make([]byte, len(encryptedDate)+12)
+	copy(output, ourState.symmetric.Nonce[:])
+	copy(output[12:], encryptedDate)
+	return output
+}
+
+func decrypt(input []byte) ([]byte, error) {
+	debugPrintf("Data to be decrypted %x\n", input)
+	data := make([]byte, len(input)-12)
+	copy(ourState.symmetric.Nonce[:], input[:12])
+	copy(data, input[12:])
+	debugPrintf("Nonce %x\n", ourState.symmetric.Nonce)
+	debugPrintf("Encrypted Data %x\n", data)
+	res, err := ourState.symmetric.Decrypt(data)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
 func (lo logging) Decrypt(src []byte) ([]byte, error) {
 	decoded := make([]byte, hex.DecodedLen(len(src)))
 	_, err := hex.Decode(decoded, src)
 	if err != nil {
 		return nil, fmt.Errorf("[Log Error] decoding bytes %v", err)
 	}
-	nonce := make([]byte, 12)
-	copy(nonce, decoded[:12])
-	plaintext, err := aesgcm.Open(nil, nonce, decoded[12:], nil)
+	plaintext, err := decrypt(decoded)
 	if err != nil {
 		return nil, fmt.Errorf("[Log Error] opening ciphertext %v", err)
 	}
 	return plaintext, nil
 }
 
-func expandKey(inputKey string) ([]byte, error) {
-	salt := [32]byte{0x6f, 0x64, 0x0e, 0xc7, 0x7f, 0x9c, 0x7a, 0xb4, 0x5f, 0xb4, 0xcc, 0x74, 0xcd, 0x73, 0x91, 0x66, 0x90, 0xd7, 0x2e, 0xd1, 0xee, 0xa7, 0xa6, 0xcd, 0x2d, 0xb1, 0xab, 0xde, 0x9e, 0x77, 0x15, 0x0a}
-	return scrypt.Key([]byte(inputKey), salt[:], 16384, 8, 1, 32)
+func cryptoSetup() *crypto.Symmetric {
+	symmetric := &crypto.Symmetric{}
+	var password string
+	var salt [32]byte
+	password = os.Getenv("CHATBOT_LOG_PASSWORD")
+	fs, err := filesystem.New("log")
+	if err != nil {
+		print.Badln(err)
+	}
+	if password == "" {
+		print.Warningln("Missing CHATBOT_LOG_PASSWORD environment var")
+		password = "Something you shouldn't use"
+	}
+	saltFile := fs.GetPasswordSaltFile()
+	if _, err := os.Stat(saltFile); os.IsNotExist(err) {
+		print.Warningf("%s does not exist creating a random salt\n", saltFile)
+		if err := symmetric.KeyFromPassword([]byte(password), nil); err != nil {
+			print.Badln(err)
+		}
+		tmpSalt := symmetric.GetPasswordSalt()
+		copy(salt[:], tmpSalt[:])
+		if err := fs.WriteToFile(salt[:], saltFile); err != nil {
+			print.Badln(err)
+		}
+	} else {
+		tmpSalt, err := filesystem.LoadFile(saltFile)
+		if err != nil {
+			print.Badln(err)
+		}
+		copy(salt[:], tmpSalt)
+		if err := symmetric.KeyFromPassword([]byte(password), &salt); err != nil {
+			print.Badln(err)
+		}
+	}
+	return symmetric
 }
 
 func init() {
+	debugPrintf = func(format string, v ...interface{}) {
+		return
+	}
 	l, err = start()
 	if err != nil {
 		print.Badln(err)
 	}
-	var key []byte
-	if res := os.Getenv("CHATBOT_LOG_KEY"); res == "" {
-		key, err = expandKey("Some Default Password That you Shouldn't Use")
-		if err != nil {
-			panic(err)
-		}
-		print.Warningln("Missing CHATBOT_LOG_KEY using default key")
-	} else {
-		key, err = expandKey(os.Getenv("CHATBOT_LOG_KEY"))
-		if err != nil {
-			panic(err)
-		}
-	}
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		panic(err.Error())
-	}
-	aesgcm, err = cipher.NewGCM(block)
-	if err != nil {
-		panic(err.Error())
-	}
-
+	s := cryptoSetup()
+	ourState.symmetric = s
 }
 
 func main() {}
