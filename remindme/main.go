@@ -81,7 +81,7 @@ func encrypt(input []byte) []byte {
 	if err != nil {
 		print.Badln(err)
 	}
-	debugPrintf("Nonce %x\n", (*nonce)[:])
+	debugPrintf("[Remindme Encrypt] Nonce %x\n", (*nonce)[:])
 	copy(ourState.symmetric.Nonce[:], (*nonce)[:])
 	encryptedDate, err := ourState.symmetric.Encrypt(input)
 	if err != nil {
@@ -99,7 +99,7 @@ func decrypt(input []byte) ([]byte, error) {
 	data := make([]byte, len(input)-12)
 	copy(ourState.symmetric.Nonce[:], input[:12])
 	copy(data, input[12:])
-	debugPrintf("Nonce %x\n", ourState.symmetric.Nonce)
+	debugPrintf("[Remindme Decrypt] Nonce %x\n", ourState.symmetric.Nonce)
 	debugPrintf("Encrypted Data %x\n", data)
 	res, err := ourState.symmetric.Decrypt(data)
 	if err != nil {

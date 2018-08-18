@@ -20,6 +20,9 @@ type backgroundPlugin string
 //Logger variable to be used as an export
 var Logger logging
 
+//BP for export
+var BP backgroundPlugin
+
 var (
 	err          error
 	l            = &logger{}
@@ -45,7 +48,9 @@ func (b backgroundPlugin) Name() string {
 
 //Debug output
 func (b backgroundPlugin) Debug(set bool, writer *io.Writer) {
-	debugPrintf = print.Debugf(set, writer)
+	var out io.Writer
+	out = os.Stdout
+	debugPrintf = print.Debugf(set, &out)
 }
 
 //Write encrypted data to a log file. Random 12 byte nonce is used, and put

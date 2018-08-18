@@ -38,6 +38,7 @@ func (b backgroundPlugin) Name() string {
 //in the env var.
 func (a authenticator) Start() {
 	for {
+		users = []string{}
 		userEnv := os.Getenv("CHATBOT_USERS")
 		for _, user := range strings.Split(userEnv, ",") {
 			users = append(users, user)
